@@ -1,0 +1,121 @@
+name: Build and release
+
+
+on:
+  push:
+    branches:
+    - master
+    tags:
+    - v*
+
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+
+    - name: Build
+      run: ./build-unix.sh
+
+    - name: Archive
+      run: tar -cf- -C target/release musbconv | xz -c9e - > musbconv-linux.tar.xz
+
+    - name: Save
+      uses: actions/upload-artifact@v2
+      with:
+        name: release-linux
+        path: "*.tar.xz"
+
+
+  build-windows:
+    runs-on: windows-2019
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+
+    - name: Build
+      run: .\build-windows.ps1
+
+    - name: Archive
+      run: Compress-Archive -Path target\release\musbconv.exe -DestinationPath musbconv-windows.zip
+
+    - name: Save
+      uses: actions/upload-artifact@v2
+      with:
+        name: release-windows
+        path: "*.zip"
+
+
+  build-macos:
+    runs-on: macos-10.15
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+
+    - name: Build
+      run: ./build-unix.sh
+
+    - name: Archive
+      run: tar -cf- -C target/release musbconv | xz -c9e - > musbconv-macos.tar.xz
+
+    - name: Save
+      uses: actions/upload-artifact@v2
+      with:
+        name: release-macos
+        path: "*.tar.xz"
+
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+
+    needs:
+    - build-linux
+    - build-windows
+    - build-macos
+
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Version
+      id: version
+      run: echo ::set-output name=version::${GITHUB_REF#refs/tags/}
+
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+
+    - name: Notes
+      run: grep -Pzom1 "(?s)\n[##\s]*${{ steps.version.outputs.version }}.*?\n+.*?\K.*?(\n\n|$)" CHANGELOG.md | sed 's/[^[:print:]]//g' > RELEASE.md
+
+    - name: Download
+      uses: actions/download-artifact@v2
+      with:
+        path: artifacts
+
+    - name: Rename
+      run: |
+        mv artifacts/release-linux/musbconv-linux.tar.xz artifacts/release-linux/musbconv-linux-${{ steps.version.outputs.version }}.tar.xz
+        mv artifacts/release-windows/musbconv-windows.zip artifacts/release-windows/musbconv-windows-${{ steps.version.outputs.version }}.zip
+        mv artifacts/release-macos/musbconv-macos.tar.xz artifacts/release-macos/musbconv-macos-${{ steps.version.outputs.version }}.tar.xz
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        files: |
+          artifacts/release-linux/*.tar.xz
+          artifacts/release-windows/*.zip
+          artifacts/release-macos/*.tar.xz
+        body_path: RELEASE.md

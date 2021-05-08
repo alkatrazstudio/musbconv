@@ -1,0 +1,40 @@
+[package]
+name = "musbconv"
+description = "Batch converter for audio files (uses ffmpeg)"
+version = "0.1.0"
+authors = ["Alexey Parfenov <zxed@alkatrazstudio.net>"]
+edition = "2018"
+license = "GPL-3.0-only"
+readme = "README.md"
+homepage = "https://github.com/alkatrazstudio/musbconv"
+repository = "https://github.com/alkatrazstudio/musbconv"
+keywords = ["audio", "converter", "music", "ffmpeg", "command-line"]
+categories = ["multimedia::encoding", "command-line-utilities"]
+publish = false
+
+[dependencies]
+chrono = "0.4.19"
+clap = "2.33.3"
+cuna = "0.6.0"
+handlebars = "3.5.5"
+lazy_static = "1.4.0"
+lexical-sort = "0.3.1"
+path-dedot = "3.0.12"
+rayon = "1.5.0"
+regex = "1.5.4"
+sanitize-filename = "0.3.0"
+serde = { version = "1.0.125", features = ["derive"] }
+serde_json = "1.0.64"
+shell-words = "1.0.0"
+which = "4.1.0"
+
+[build-dependencies]
+vergen = { version = "5.1.5", default-features = false, features = ["build", "git"] }
+
+[profile.release]
+lto = true
+panic = "abort"
+codegen-units = 1
+
+[profile.dev]
+codegen-units = 1
