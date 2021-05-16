@@ -246,7 +246,10 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
             if app_args.dry_run {
                 output = None;
             } else {
-                let mut proc = Command::new(&progs.ffmpeg_bin).args(&args).stdin(std::process::Stdio::piped()).spawn()?;
+                let mut proc = Command::new(&progs.ffmpeg_bin).args(&args)
+                    .stdin(std::process::Stdio::piped())
+                    .stderr(std::process::Stdio::piped())
+                    .spawn()?;
                 if let Some(stdin) = proc.stdin.as_mut() {
                     stdin.write_all(&output_pic_data)?;
                     stdin.flush()?;
