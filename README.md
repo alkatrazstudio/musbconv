@@ -3,6 +3,7 @@
 Performs a batch conversion between audio formats using ffmpeg.
 Uses multiple threads if possible.
 Supports CUE sheets and album art.
+Can convert to MP3 or OGG formats only.
 
 
 ## Usage
@@ -117,16 +118,11 @@ OPTIONS:
             Must be in range of 1-10.
              [default: 2]
         --output-ext <ext>
-            Extension for the output filename.
-            The extension also defines the format (e.g. mp3, ogg).
-            Some formats have predefined ffmpeg settings:
-            - MP3: -b:a 320k -write_id3v2 1 -id3v2_version 4
-            - OGG: -b:a 320k
-            The extension/format name is case-insensitive.
-            Not all output formats may be supported by ffmpeg.
-            Run "ffmpeg -formats" to show a list of the supported formats
-            (search for "E"-formats).
-             [default: mp3]
+            Extension/format for the output filename.
+            The formats have predefined ffmpeg settings:
+            * mp3: -b:a 320k -write_id3v2 1 -id3v2_version 4
+            * ogg: -b:a 320k
+             [default: mp3]  [possible values: mp3, ogg]
         --overwrite <y|n>
             Overwrite existing files.
             y - overwrite the file if it already exists.
@@ -136,9 +132,9 @@ OPTIONS:
             Quality for a cover art.
             Only applies when the cover art is bigger than the allowed dimensions
             and needs to be re-encoded.
-            1 - max quality
-            31 - lowest quality
-             [default: 2]
+            1 - lowest quality
+            100 - highest quality
+             [default: 96]
         --threads <THREADS>
             Number of threads to simultaneously run ffmpeg in.
             Must be between 0 and 1024.
@@ -170,7 +166,7 @@ EXAMPLES:
        musbconv --input-dir=flac_folder1 --input-dir=flac_folder2 --output-dir=ogg_folder \
          --filename-template="{{artist}}/{{year}} - {{album}}/{{#if disc}}CD {{disc}}/{{/if}}{{track}}. {{title}}" \
          --input-ext=flac,wv --output-ext=ogg --overwrite=y --dry-run=y \
-         --max-pic-width=256 --max-pic-height=256 --pic_quality=5  \
+         --max-pic-width=256 --max-pic-height=256 --pic_quality=50 \
          -- -b:a 128k
 
      c) For Windows. Specify custom path for ffmpeg and ffprobe.

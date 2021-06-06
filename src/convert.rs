@@ -13,6 +13,7 @@ use std::io::Write;
 use path_dedot::ParseDot;
 use crate::Progs;
 use std::cmp::max;
+use crate::formats::Format;
 
 pub struct Item {
     pub filename: String,
@@ -145,22 +146,7 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
         "-y"
     ];
 
-    let mut audio_args;
-    match app_args.output_ext.as_str() {
-        "mp3" => {
-            audio_args = str_vec![
-                "-b:a", "320k",
-                "-write_id3v2", "1",
-                "-id3v2_version", "4"
-            ];
-        }
-        "ogg" => {
-            audio_args = str_vec![
-                "-b:a", "320k"
-            ];
-        }
-        _ => audio_args = Vec::new()
-    }
+    let mut audio_args = app_args.output_ext_type.audio_args();
 
     add_meta(&mut audio_args, &meta.tags.album, "album");
     add_meta(&mut audio_args, &meta.tags.composer, "composer");
@@ -236,9 +222,18 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
             args.extend(audio_args);
             args.extend(str_vec![
                 "-map", "0:a", "-map", "1:v",
-                "-c:v", "copy",
                 "-metadata:s:v", "title=Album cover", "-metadata:s:v", "comment=Cover (front)"
             ]);
+            match app_args.output_ext_type {
+                Format::MP3 => {
+                    args.extend(str_vec!["-c:v", "copy"]);
+                },
+                Format::OGG => {
+                    args.extend(str_vec!["-c:v", "libtheora"]);
+                    let pic_conv_args = ffmpeg_conv_pic_args(&app_args);
+                    args.extend(pic_conv_args);
+                }
+            }
             let mut args = args.iter().chain(&app_args.ffmpeg_opts).cloned().collect::<Vec<String>>();
             args.push(output_path_str.into());
 

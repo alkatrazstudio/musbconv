@@ -8,6 +8,7 @@ mod args;
 mod cue;
 mod convert;
 mod files;
+mod formats;
 
 use rayon::prelude::*;
 use std::error::Error;

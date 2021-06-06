@@ -6,6 +6,7 @@ use chrono::{DateTime};
 use std::error::Error;
 use std::io::BufWriter;
 use std::process::exit;
+use crate::formats::Format;
 
 pub struct AppArgs {
     pub input_dirs: Vec<String>,
@@ -14,6 +15,7 @@ pub struct AppArgs {
     pub dry_run: bool,
     pub input_exts: Vec<String>,
     pub output_ext: String,
+    pub output_ext_type: Format,
     pub overwrite: bool,
     pub ffmpeg_opts: Vec<String>,
     pub max_pic_width: u16,
@@ -66,6 +68,23 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
             Author: Alexey Parfenov (a.k.a. ZXED) <zxed@alkatrazstudio.net>\n\
             Author homepage: https://alkatrazstudio.net",
                 &ts_str, git_hash);
+
+    let pic_quality_help = format!("\
+        Quality for a cover art.\n\
+        Only applies when the cover art is bigger than the allowed dimensions\n\
+        and needs to be re-encoded.\n\
+        {} - lowest quality\n\
+        {} - highest quality\n",
+            Format::MIN_QUALITY, Format::MAX_QUALITY);
+
+    let mp3_audio_args = Format::audio_args(&Format::MP3).join(" ");
+    let ogg_audio_args = Format::audio_args(&Format::OGG).join(" ");
+    let output_ext_help = format!("\
+        Extension/format for the output filename.\n\
+        The formats have predefined ffmpeg settings:\n\
+        * mp3: {}\n\
+        * ogg: {}\n",
+            mp3_audio_args, ogg_audio_args);
 
     let mut app = App::new("musbconv")
         .long_about(about.as_str())
@@ -163,17 +182,9 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
 
         .arg(Arg::with_name("OUTPUT_EXT")
             .long("output-ext")
-            .long_help( "\
-                Extension for the output filename.\n\
-                The extension also defines the format (e.g. mp3, ogg).\n\
-                Some formats have predefined ffmpeg settings:\n\
-                - MP3: -b:a 320k -write_id3v2 1 -id3v2_version 4\n\
-                - OGG: -b:a 320k\n\
-                The extension/format name is case-insensitive.\n\
-                Not all output formats may be supported by ffmpeg.\n\
-                Run \"ffmpeg -formats\" to show a list of the supported formats\n\
-                (search for \"E\"-formats).\n")
+            .long_help(&output_ext_help)
             .default_value("mp3")
+            .possible_values(&["mp3", "ogg"])
             .empty_values(false)
             .value_name("ext"))
 
@@ -209,15 +220,10 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
 
         .arg(Arg::with_name("PIC_QUALITY")
             .long("pic-quality")
-            .long_help("\
-                Quality for a cover art.\n\
-                Only applies when the cover art is bigger than the allowed dimensions\n\
-                and needs to be re-encoded.\n\
-                1 - max quality\n\
-                31 - lowest quality\n")
+            .long_help(&pic_quality_help)
             .value_name("QUALITY")
-            .default_value("2")
-            .validator(validate_num_func(1, 31)))
+            .default_value("96")
+            .validator(validate_num_func(1, 100)))
 
         .arg(Arg::with_name("USE_EMBED_PIC")
             .long("use-embed-pic")
@@ -307,7 +313,7 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
             \x20      musbconv --input-dir=flac_folder1 --input-dir=flac_folder2 --output-dir=ogg_folder \\\n\
             \x20        --filename-template=\"{{artist}}/{{year}} - {{album}}/{{#if disc}}CD {{disc}}/{{/if}}{{track}}. {{title}}\" \\\n\
             \x20        --input-ext=flac,wv --output-ext=ogg --overwrite=y --dry-run=y \\\n\
-            \x20        --max-pic-width=256 --max-pic-height=256 --pic_quality=5  \\\n\
+            \x20        --max-pic-width=256 --max-pic-height=256 --pic_quality=50 \\\n\
             \x20        -- -b:a 128k\n\
             \n\
             \x20    c) For Windows. Specify custom path for ffmpeg and ffprobe.\n\
@@ -332,13 +338,21 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
 
             let ffmpeg_opts = matches.values_of("FFMPEG_OPTIONS").unwrap_or_default().map(|s| s.to_string()).collect();
 
+            let output_ext = matches.value_of("OUTPUT_EXT").unwrap();
+            let output_ext_type = match output_ext {
+                "mp3" => Format::MP3,
+                "ogg" => Format::OGG,
+                _ => return Err(format!("Unsupported extension: {}", output_ext))?
+            };
+
             return Ok(Some(AppArgs {
                 input_dirs: matches.values_of("INPUT_DIR").unwrap().map(|s| s.to_owned()).collect(),
                 output_dir: matches.value_of("OUTPUT_DIR").unwrap().to_string(),
                 filename_template: matches.value_of("FILENAME_TEMPLATE").unwrap().to_string(),
                 dry_run: matches.value_of("DRY_RUN").unwrap() == "y",
                 input_exts,
-                output_ext: matches.value_of("OUTPUT_EXT").unwrap().to_lowercase(),
+                output_ext: output_ext.to_string(),
+                output_ext_type,
                 overwrite: matches.value_of("OVERWRITE").unwrap() == "y",
                 ffmpeg_opts,
                 max_pic_height: matches.value_of("MAX_PIC_HEIGHT").unwrap().parse::<u16>()?,
