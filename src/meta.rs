@@ -165,6 +165,7 @@ fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo
         }
         if !cue.performer.is_empty() {
             meta_tags.performer = cue.performer.clone();
+            meta_tags.artist = cue.performer.clone();
         }
         if !cue.date.is_empty() {
             meta_tags.date = cue.date.clone();

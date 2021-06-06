@@ -5,6 +5,7 @@
 
 - Fixed: cannot convert to OGG with an external cover art
 - Fixed: track number detection can't parse X/Y format
+- Fixed: CUE "performer" is not treated as "artist"
 - Removed: support for any output format except MP3 and OGG
 
 
