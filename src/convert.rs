@@ -228,7 +228,7 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
                 Format::MP3 => {
                     args.extend(str_vec!["-c:v", "copy"]);
                 },
-                Format::OGG => {
+                Format::Ogg => {
                     args.extend(str_vec!["-c:v", "libtheora"]);
                     let pic_conv_args = ffmpeg_conv_pic_args(&app_args);
                     args.extend(pic_conv_args);

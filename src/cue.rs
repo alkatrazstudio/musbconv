@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // 🄯 2021, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use cuna::Cuna;
 use cuna::track::Track;
 use regex::Regex;
@@ -44,7 +44,7 @@ fn open_cue(path: &Path) -> Result<Cuna, Box<dyn Error>> {
     return Ok(cue);
 }
 
-fn find_cue_info_in_file(filename: &PathBuf) -> Option<Vec<CueInfo>> {
+fn find_cue_info_in_file(filename: &Path) -> Option<Vec<CueInfo>> {
     if ! filename.exists() {
         return None;
     }
@@ -79,7 +79,7 @@ pub fn find_cue_info(path: &Path) -> Option<Vec<CueInfo>> {
     if let Some(cue_filename) = path.to_str() {
         let cue_filename = cue_filename.to_string() + ".cue";
         let cue_filename = Path::new(&cue_filename);
-        if let Some(info) = find_cue_info_in_file(&cue_filename.to_path_buf()) {
+        if let Some(info) = find_cue_info_in_file(cue_filename) {
             return Some(info);
         }
     }

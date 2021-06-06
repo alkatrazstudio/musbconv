@@ -57,17 +57,17 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
     let ts_str = ts.format(format!("%B {}, %Y", &day).as_str()).to_string();
     let git_hash = &env!("VERGEN_GIT_SHA");
     let about = format!("\n\
-            Performs a batch conversion between audio formats using ffmpeg.\n\
-            Uses multiple threads if possible.\n\
-            Supports CUE sheets and album art.\n\
-            \n\
-            Project homepage: https://github.com/alkatrazstudio/musbconv\n\
-            License: GPLv3\n\
-            Build date: {}\n\
-            Git commit: {}\n\
-            Author: Alexey Parfenov (a.k.a. ZXED) <zxed@alkatrazstudio.net>\n\
-            Author homepage: https://alkatrazstudio.net",
-                &ts_str, git_hash);
+        Performs a batch conversion between audio formats using ffmpeg.\n\
+        Uses multiple threads if possible.\n\
+        Supports CUE sheets and album art.\n\
+        \n\
+        Project homepage: https://github.com/alkatrazstudio/musbconv\n\
+        License: GPLv3\n\
+        Build date: {}\n\
+        Git commit: {}\n\
+        Author: Alexey Parfenov (a.k.a. ZXED) <zxed@alkatrazstudio.net>\n\
+        Author homepage: https://alkatrazstudio.net",
+            &ts_str, git_hash);
 
     let pic_quality_help = format!("\
         Quality for a cover art.\n\
@@ -78,7 +78,7 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
             Format::MIN_QUALITY, Format::MAX_QUALITY);
 
     let mp3_audio_args = Format::audio_args(&Format::MP3).join(" ");
-    let ogg_audio_args = Format::audio_args(&Format::OGG).join(" ");
+    let ogg_audio_args = Format::audio_args(&Format::Ogg).join(" ");
     let output_ext_help = format!("\
         Extension/format for the output filename.\n\
         The formats have predefined ffmpeg settings:\n\
@@ -341,8 +341,8 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
             let output_ext = matches.value_of("OUTPUT_EXT").unwrap();
             let output_ext_type = match output_ext {
                 "mp3" => Format::MP3,
-                "ogg" => Format::OGG,
-                _ => return Err(format!("Unsupported extension: {}", output_ext))?
+                "ogg" => Format::Ogg,
+                _ => return Err(format!("Unsupported extension: {}", output_ext).into())
             };
 
             return Ok(Some(AppArgs {

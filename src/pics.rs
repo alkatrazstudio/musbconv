@@ -21,7 +21,7 @@ pub fn ffmpeg_conv_pic_args(app_args: &AppArgs) -> Vec<String> {
 
 fn conv_pic(pic_file: &str, app_args: &AppArgs, progs: &Progs) -> Option<Vec<u8>> {
     match app_args.output_ext_type {
-        Format::OGG => return std::fs::read(pic_file).ok(),
+        Format::Ogg => return std::fs::read(pic_file).ok(),
 
         Format::MP3 => {
             let pic_args = ffmpeg_conv_pic_args(app_args);
