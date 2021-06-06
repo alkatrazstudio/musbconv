@@ -1,7 +1,7 @@
 # musbconv - CHANGELOG
 
 
-## unreleased
+## v0.3.0 (June 6, 2021)
 
 - Added: APE as one of default input formats
 - Added: find CUE files that include the music file extension in their filename
