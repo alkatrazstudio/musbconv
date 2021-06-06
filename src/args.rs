@@ -176,7 +176,7 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
                 Not all output formats may be supported by ffmpeg.\n\
                 Run \"ffmpeg -formats\" to show a list of the supported formats\n\
                 (search for \"D\"-formats).\n")
-            .default_value("flac,wv,m4a")
+            .default_value("flac,wv,m4a,ape")
             .empty_values(false)
             .value_name("ext1,ext2,..."))
 

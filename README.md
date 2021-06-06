@@ -93,7 +93,7 @@ OPTIONS:
             Not all output formats may be supported by ffmpeg.
             Run "ffmpeg -formats" to show a list of the supported formats
             (search for "D"-formats).
-             [default: flac,wv,m4a]
+             [default: flac,wv,m4a,ape]
         --max-pic-height <HEIGHT>
             Maximum height for a cover art in pixels.
             The aspect ratio of the cover art will be preserved.
