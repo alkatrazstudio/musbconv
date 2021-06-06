@@ -97,7 +97,8 @@ fn first_val(map: &HashMap<String, &String>, keys: &[&str]) -> String {
 
 fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo>) -> MetaTags {
     lazy_static! {
-        static ref RX: Regex = Regex::new(r"[^a-z]").unwrap();
+        static ref RX_ALPHA: Regex = Regex::new(r"[^a-z]").unwrap();
+        static ref RX_TRACK: Regex = Regex::new(r"^(\d+)/(\d+)$").unwrap();
     }
 
     let mut tags = HashMap::new();
@@ -116,7 +117,7 @@ fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo
 
     for key in keys {
         let tag_key = key.to_lowercase();
-        let tag_key = RX.replace_all(&tag_key, "").to_string();
+        let tag_key = RX_ALPHA.replace_all(&tag_key, "").to_string();
         if let Value::String(val) = &hash[key] {
             tags.insert(tag_key, val);
         }
@@ -176,6 +177,15 @@ fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo
         }
         if !cue.tracks.is_empty() {
             meta_tags.tracks = cue.tracks.clone();
+        }
+    }
+
+    if let Some(m) = RX_TRACK.captures(&meta_tags.track.clone()) {
+        if let (Some(m1), Some(m2)) = (m.get(1), m.get(2)) {
+            meta_tags.track = m1.as_str().to_string();
+            if meta_tags.tracks.is_empty() {
+                meta_tags.tracks = m2.as_str().to_string();
+            }
         }
     }
 

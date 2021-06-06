@@ -118,7 +118,7 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
         tags.tracks = format!("{:0>width$}", tags.tracks, width = app_args.min_track_number_digits as usize);
     }
     if !tags.track.is_empty() {
-        let tracks_digits_count = max(tags.tracks.len(), app_args.min_track_number_digits  as usize);
+        let tracks_digits_count = max(tags.tracks.len(), app_args.min_track_number_digits as usize);
         tags.track = format!("{:0>width$}", tags.track, width = tracks_digits_count);
     }
 
