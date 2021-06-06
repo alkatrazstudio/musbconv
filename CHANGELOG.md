@@ -4,6 +4,7 @@
 ## unreleased
 
 - Added: APE as one of default input formats
+- Added: find CUE files that include the music file extension in their filename
 - Fixed: cannot convert to OGG with an external cover art
 - Fixed: track number detection can't parse X/Y format
 - Fixed: CUE "performer" is not treated as "artist"

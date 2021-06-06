@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // 🄯 2021, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use cuna::Cuna;
 use cuna::track::Track;
 use regex::Regex;
@@ -44,27 +44,47 @@ fn open_cue(path: &Path) -> Result<Cuna, Box<dyn Error>> {
     return Ok(cue);
 }
 
-pub fn find_cue_info(path: &Path) -> Vec<CueInfo> {
-    let cue_filename = path.with_extension("cue");
-    let mut infos = Vec::new();
-    if cue_filename.exists() {
-        match open_cue(&cue_filename) {
-            Ok(cue) => {
-                if let Some(file) = cue.first_file() {
-                    let max_track_index = max_track_index(&file.tracks);
-                    for track in &file.tracks {
-                        let next_track = track_by_index(&file.tracks, track.id() + 1);
-                        if let Some(info) = cue_track_info(&track, next_track, max_track_index, &cue) {
-                            infos.push(info);
-                        }
+fn find_cue_info_in_file(filename: &PathBuf) -> Option<Vec<CueInfo>> {
+    if ! filename.exists() {
+        return None;
+    }
+
+    match open_cue(&filename) {
+        Ok(cue) => {
+            if let Some(file) = cue.first_file() {
+                let mut infos = Vec::new();
+                let max_track_index = max_track_index(&file.tracks);
+                for track in &file.tracks {
+                    let next_track = track_by_index(&file.tracks, track.id() + 1);
+                    if let Some(info) = cue_track_info(&track, next_track, max_track_index, &cue) {
+                        infos.push(info);
                     }
                 }
-            },
+                return Some(infos);
+            }
+        },
 
-            Err(e) => println!("{}", e)
+        Err(e) => println!("{}", e)
+    }
+
+    return None;
+}
+
+pub fn find_cue_info(path: &Path) -> Option<Vec<CueInfo>> {
+    let cue_filename = path.with_extension("cue");
+    if let Some(info) = find_cue_info_in_file(&cue_filename) {
+        return Some(info);
+    }
+
+    if let Some(cue_filename) = path.to_str() {
+        let cue_filename = cue_filename.to_string() + ".cue";
+        let cue_filename = Path::new(&cue_filename);
+        if let Some(info) = find_cue_info_in_file(&cue_filename.to_path_buf()) {
+            return Some(info);
         }
     }
-    return infos;
+
+    return None;
 }
 
 fn max_track_index(tracks: &[Track]) -> u8 {

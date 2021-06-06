@@ -37,7 +37,10 @@ pub fn find_files(dirs: &[String], exts: &[String]) -> Result<Vec<Item>, Box<dyn
                             }
                             if let Some(basename) = path.file_stem() {
                                 if let Some(basename) = basename.to_str() {
-                                    let infos = find_cue_info(&path);
+                                    let mut infos = Vec::new();
+                                    if let Some(cue_infos) = find_cue_info(&path) {
+                                        infos = cue_infos;
+                                    }
                                     if infos.is_empty() {
                                         items.push(Item {
                                             filename: filename.to_string(),
