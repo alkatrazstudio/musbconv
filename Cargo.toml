@@ -15,8 +15,8 @@ publish = false
 [dependencies]
 chrono = "0.4.19"
 clap = "2.33.3"
-cuna = "0.6.0"
-handlebars = "4.0.0"
+cuna = "0.6.1"
+handlebars = "4.1.0"
 lazy_static = "1.4.0"
 lexical-sort = "0.3.1"
 path-dedot = "3.0.12"
@@ -29,7 +29,7 @@ shell-words = "1.0.0"
 which = "4.1.0"
 
 [build-dependencies]
-vergen = { version = "5.1.8", default-features = false, features = ["build", "git"] }
+vergen = { version = "5.1.13", default-features = false, features = ["build", "git"] }
 
 [profile.release]
 lto = true
