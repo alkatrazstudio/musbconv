@@ -173,6 +173,12 @@ fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo
         if !cue.disc_id.is_empty() {
             meta_tags.disc_id = cue.disc_id.clone();
         }
+        if !cue.disc_number.is_empty() {
+            meta_tags.disc = cue.disc_number.clone();
+        }
+        if !cue.total_discs.is_empty() {
+            meta_tags.discs = cue.total_discs.clone();
+        }
         if !cue.track.is_empty() {
             meta_tags.track = cue.track.clone();
         }

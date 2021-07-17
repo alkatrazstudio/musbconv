@@ -23,6 +23,8 @@ pub struct CueInfo {
     pub genre: String,
     pub date: String,
     pub disc_id: String,
+    pub disc_number: String,
+    pub total_discs: String,
     pub track: String,
     pub tracks: String,
 }
@@ -163,6 +165,8 @@ fn cue_track_info(track: &Track, next_track: Option<&Track>, max_track_index: u8
             genre: extract_comment(cd, "GENRE"),
             date: extract_comment(cd, "DATE"),
             disc_id: extract_comment(cd, "DISCID"),
+            disc_number: extract_comment(cd, "DISCNUMBER"),
+            total_discs: extract_comment(cd, "TOTALDISCS"),
             track: track.id().to_string().trim().to_string(),
             tracks: max_track_index.to_string().trim().to_string()
         });
