@@ -1,6 +1,12 @@
 # musbconv - CHANGELOG
 
 
+## v0.4.0 (July 17, 2021)
+
+- Added: support for new CUE tags: DISCNUMBER and TOTALDISCS
+- Fixed: tags contain leading and trailing whitespace
+
+
 ## v0.3.0 (June 6, 2021)
 
 - Added: APE as one of default input formats
