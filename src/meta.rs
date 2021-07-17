@@ -86,7 +86,7 @@ fn to_str(x: Option<&OsStr>) -> String {
     return x.unwrap_or_default().to_str().unwrap().to_string();
 }
 
-fn first_val(map: &HashMap<String, &String>, keys: &[&str]) -> String {
+fn first_val(map: &HashMap<String, String>, keys: &[&str]) -> String {
     for key in keys {
         if let Some(v) = map.get(*key) {
             return v.to_string();
@@ -119,7 +119,7 @@ fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo
         let tag_key = key.to_lowercase();
         let tag_key = RX_ALPHA.replace_all(&tag_key, "").to_string();
         if let Value::String(val) = &hash[key] {
-            tags.insert(tag_key, val);
+            tags.insert(tag_key, val.trim().to_owned());
         }
     }
 

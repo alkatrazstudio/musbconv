@@ -119,9 +119,9 @@ fn track_start(track: &Track) -> Option<u32> {
 
 fn opt_str(s: &[String], def: &str) -> String {
     if let Some(s) = s.first() {
-        return s.to_owned();
+        return s.trim().to_owned();
     }
-    return def.into();
+    return def.to_owned();
 }
 
 fn extract_comment(cd: &Cuna, tag: &str) -> String {
@@ -132,9 +132,9 @@ fn extract_comment(cd: &Cuna, tag: &str) -> String {
             if let Some(m) = m.get(1) {
                 let s = m.as_str();
                 if s.starts_with('"') && s.ends_with('"') && s.len() > 1 {
-                    return s[1..s.len()-1].into();
+                    return s[1..s.len()-1].trim().to_owned();
                 }
-                return s.into();
+                return s.trim().to_owned();
             }
         }
     }
