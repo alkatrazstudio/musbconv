@@ -1,6 +1,11 @@
 # musbconv - CHANGELOG
 
 
+## v0.5.0 (August 15, 2021)
+
+- Changed: TOTALDISCS=1 is now ignored when constructing the filename
+
+
 ## v0.4.0 (July 17, 2021)
 
 - Added: support for new CUE tags: DISCNUMBER and TOTALDISCS
