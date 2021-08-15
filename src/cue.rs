@@ -111,7 +111,7 @@ fn track_by_index(tracks: &[Track], id: u8) -> Option<&Track> {
 fn track_start(track: &Track) -> Option<u32> {
     for i in &track.index {
         if i.id() == 1 {
-            return Some(i.begin_time.as_frames());
+            return Some(i.begin_time.total_frames());
         }
     }
     return None;
