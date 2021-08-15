@@ -6,13 +6,12 @@ use crate::pics::{PicsMap, find_cover_in_dir, ffmpeg_conv_pic_args};
 use crate::args::AppArgs;
 use std::error::Error;
 use std::path::Path;
-use crate::meta::{extract_meta, fill_fallback_tags, sanitize_tags, MetaTags};
+use crate::meta::{extract_meta, prepare_filename_tags, MetaTags};
 use handlebars::Handlebars;
 use std::process::Command;
 use std::io::Write;
 use path_dedot::ParseDot;
 use crate::Progs;
-use std::cmp::max;
 use crate::formats::Format;
 
 pub struct Item {
@@ -113,16 +112,7 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
     let input_dir = canonical_path.to_str().ok_or("Can't get a string from the canonical path")?;
 
     let meta = extract_meta(input_filename, &item.cue, &progs.ffprobe_bin)?;
-    let mut tags = fill_fallback_tags(&meta.tags);
-    if !tags.tracks.is_empty() {
-        tags.tracks = format!("{:0>width$}", tags.tracks, width = app_args.min_track_number_digits as usize);
-    }
-    if !tags.track.is_empty() {
-        let tracks_digits_count = max(tags.tracks.len(), app_args.min_track_number_digits as usize);
-        tags.track = format!("{:0>width$}", tags.track, width = tracks_digits_count);
-    }
-
-    let filename_tags = sanitize_tags(&tags);
+    let filename_tags = prepare_filename_tags(&meta.tags, app_args.min_track_number_digits);
 
     let filename = render_template(&app_args.filename_template, &filename_tags)?;
     let filename = filename + "." + &app_args.output_ext;

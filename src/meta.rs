@@ -12,7 +12,7 @@ use std::ffi::OsStr;
 use std::error::Error;
 use sanitize_filename::{sanitize_with_options, Options};
 use crate::cue::CueInfo;
-use std::cmp::Ordering;
+use std::cmp::{Ordering, max};
 
 #[derive(Serialize, Deserialize)]
 pub struct MetaStreamTags {
@@ -236,7 +236,7 @@ pub fn sanitize_tags(meta: &MetaTags) -> MetaTags {
     }
 }
 
-pub fn fill_fallback_tags(meta_tags: &MetaTags) -> MetaTags {
+pub fn prepare_filename_tags(meta_tags: &MetaTags, min_track_number_digits: u8) -> MetaTags {
     let mut meta_tags = meta_tags.clone();
 
     if meta_tags.year.is_empty() && !meta_tags.date.is_empty() {
@@ -288,6 +288,20 @@ pub fn fill_fallback_tags(meta_tags: &MetaTags) -> MetaTags {
         meta_tags.lyricist = meta_tags.songwriter.clone();
     }
 
+    if meta_tags.discs == "1" && meta_tags.disc == "1" {
+        meta_tags.discs = "".to_string();
+        meta_tags.disc = "".to_string();
+    }
+
+    if !meta_tags.tracks.is_empty() {
+        meta_tags.tracks = format!("{:0>width$}", meta_tags.tracks, width = min_track_number_digits as usize);
+    }
+    if !meta_tags.track.is_empty() {
+        let tracks_digits_count = max(meta_tags.tracks.len(), min_track_number_digits as usize) ;
+        meta_tags.track = format!("{:0>width$}", meta_tags.track, width = tracks_digits_count);
+    }
+
+    meta_tags = sanitize_tags(&meta_tags);
     return meta_tags;
 }
 
