@@ -1,6 +1,3 @@
-use vergen::{Config, vergen};
-use std::error::Error;
-
-fn main() -> Result<(), Box<dyn Error>> {
-    return Ok(vergen(Config::default())?);
+fn main() -> std::io::Result<()> {
+    return built::write_built_file();
 }
