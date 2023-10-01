@@ -107,9 +107,9 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
 {
     let input_filename = &item.filename;
     item.print_info("INFO", &format!("processing {}", &input_filename));
-    let canonical_path = Path::new(input_filename).parent()
+    let canonical_dir = Path::new(input_filename).parent()
         .ok_or(format!("no parent for {}", input_filename))?.canonicalize()?;
-    let input_dir = canonical_path.to_str().ok_or("Can't get a string from the canonical path")?;
+    let input_dir = canonical_dir.to_str().ok_or("Can't get a string from the canonical path")?;
 
     let meta = extract_meta(input_filename, &item.cue, &progs.ffprobe_bin)?;
     let filename_tags = prepare_filename_tags(&meta.tags, app_args.min_track_number_digits);
@@ -196,7 +196,24 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
         }
     } else {
         let output_pic_data;
-        if let Some(input_pic_filename) = find_cover_in_dir(input_dir, &app_args.cover_names, &app_args.cover_exts) {
+        let mut cover_names = app_args.cover_names.clone();
+        if app_args.cover_name_from_dirname {
+            let dirname = canonical_dir.file_name()
+                .ok_or("Can't get a dirname from the canonical path")?
+                .to_str()
+                .ok_or("Can't convert a dirname to string")?
+                .to_lowercase().trim().to_string();
+            cover_names.insert(0, dirname);
+        }
+        if app_args.cover_name_from_filename {
+            let basename = Path::new(input_filename).file_stem()
+                .ok_or("Can't get a file basename from the canonical path")?
+                .to_str()
+                .ok_or("Can't convert a file basename to string")?
+                .to_lowercase().trim().to_string();
+            cover_names.insert(0, basename);
+        }
+        if let Some(input_pic_filename) = find_cover_in_dir(input_dir, &cover_names, &app_args.cover_exts) {
             output_pic_data = pics.conv_pic_if_needed(&input_pic_filename, &app_args, &progs);
             if output_pic_data == None {
                 return Err(format!("can't convert: {}", &input_pic_filename).into());

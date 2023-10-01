@@ -31,6 +31,8 @@ pub struct AppArgs {
     pub ffprobe_bin: Option<String>,
     pub threads_count: usize,
     pub cover_names: Vec<String>,
+    pub cover_name_from_dirname: bool,
+    pub cover_name_from_filename: bool,
     pub cover_exts: Vec<String>,
     pub min_track_number_digits: u8
 }
@@ -232,11 +234,31 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
                 Comma-separated list of file names of cover art images.\n\
                 The file names do not include extensions (which are specified via --cover-ext).\n\
                 The file names are case-insensitive.\n\
-                Set to an empty string (--cover-name=\"\") to disable loading cover art from files.\n")
+                Set to an empty string (--cover-name=\"\") to disable loading cover art from any predefined filenames.")
             .value_name("FILENAME")
             .default_value("folder,cover,album,albumartsmall,thumb,front,scan"))
 
-        .arg(Arg::with_name("COVER_EXT")
+        .arg(Arg::new("COVER_NAME_FROM_DIRNAME")
+            .long("cover-name-from-dirname")
+            .long_help("\
+                Get filename of cover art name from the source file directory.\n\
+                For example, for dirname/file.mp3 the cover art will be taken from dirname/dirname.<cover-ext> if any.\n\
+                The search for the cover filename is case-insensitive.\n\
+                This takes precedence over --cover-name.")
+            .value_name("y|n")
+            .default_value("y"))
+
+        .arg(Arg::new("COVER_NAME_FROM_FILENAME")
+            .long("cover-name-from-filename")
+            .long_help("\
+                Get filename of cover art name from the source filename.\n\
+                For example, for dirname/file.mp3 the cover art will be taken from dirname/file.<cover-ext> if any.\n\
+                The search for the cover filename is case-insensitive.\n\
+                This takes precedence over --cover-name-from-dirname.")
+            .value_name("y|n")
+            .default_value("y"))
+
+        .arg(Arg::new("COVER_EXT")
             .long("cover-ext")
             .long_help("\
                 Comma-separated list of file extensions of cover art images.\n\
@@ -354,6 +376,8 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
                 ffprobe_bin: matches.get_one::<String>("FFPROBE_BIN").map(|s| s.clone()),
                 threads_count: *matches.get_one::<usize>("THREADS").unwrap(),
                 cover_names,
+                cover_name_from_dirname: matches.get_one::<String>("COVER_NAME_FROM_DIRNAME").unwrap().as_str() == "y",
+                cover_name_from_filename: matches.get_one::<String>("COVER_NAME_FROM_FILENAME").unwrap().as_str() == "y",
                 cover_exts,
                 min_track_number_digits: *matches.get_one::<u8>("MIN_TRACK_NUMBER_DIGITS").unwrap(),
             }));
