@@ -21,7 +21,7 @@ jobs:
         persist-credentials: false
 
     - name: Build
-      run: ./build-unix.sh
+      run: cargo build --release -vv
 
     - name: Archive
       run: tar -cf- -C target/release musbconv | xz -c9e - > musbconv-linux.tar.xz
@@ -43,7 +43,7 @@ jobs:
         persist-credentials: false
 
     - name: Build
-      run: .\build-windows.ps1
+      run: cargo build --release -vv
 
     - name: Archive
       run: Compress-Archive -Path target\release\musbconv.exe -DestinationPath musbconv-windows.zip
@@ -65,7 +65,7 @@ jobs:
         persist-credentials: false
 
     - name: Build
-      run: ./build-unix.sh
+      run: cargo build --release -vv
 
     - name: Archive
       run: tar -cf- -C target/release musbconv | xz -c9e - > musbconv-macos.tar.xz

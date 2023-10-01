@@ -32,9 +32,7 @@ which = "=4.4.2"
 built = { version = "=0.7.0", features = ["chrono", "git2"] }
 
 [profile.release]
+codegen-units = 1
 lto = true
 panic = "abort"
-codegen-units = 1
-
-[profile.dev]
-codegen-units = 1
+strip = true
