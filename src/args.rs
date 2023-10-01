@@ -4,6 +4,7 @@
 use clap::{Arg, ArgAction, Command};
 use std::error::Error;
 use std::io::BufWriter;
+use std::num::NonZeroUsize;
 use std::process::exit;
 use clap::builder::{NonEmptyStringValueParser, RangedU64ValueParser};
 use clap::error::ErrorKind;
@@ -78,6 +79,9 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
         * mp3: {}\n\
         * ogg: {}",
             mp3_audio_args, ogg_audio_args);
+
+    let max_threads_count = rayon::max_num_threads() as u64;
+    let default_threads_count = std::thread::available_parallelism().unwrap_or(NonZeroUsize::MIN).get() as u64;
 
     let mut app = Command::new("musbconv")
         .long_about(about)
@@ -304,12 +308,13 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
 
         .arg(Arg::new("THREADS")
             .long("threads")
-            .long_help("\
+            .long_help(format!("\
                 Number of threads to simultaneously run ffmpeg in.\n\
-                Must be between 0 and 1024.\n\
-                If not specified or zero then the number of threads is chosen automatically.")
-            .default_value("0")
-            .value_parser(RangedU64ValueParser::<usize>::new().range(0..1024)))
+                Must be between 1 and {}.",
+                    max_threads_count
+            ))
+            .default_value(default_threads_count.to_string())
+            .value_parser(RangedU64ValueParser::<usize>::new().range(1..max_threads_count)))
 
         .after_help(
             "EXAMPLES:\n\
