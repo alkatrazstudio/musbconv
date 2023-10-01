@@ -12,6 +12,7 @@ on:
 jobs:
   build-linux:
     runs-on: ubuntu-22.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
+    container: rust:1.72.1
 
     steps:
     - name: Checkout
