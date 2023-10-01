@@ -11,8 +11,12 @@ use handlebars::Handlebars;
 use std::process::Command;
 use std::io::Write;
 use path_dedot::ParseDot;
-use crate::Progs;
 use crate::formats::Format;
+
+pub struct Progs {
+    pub ffmpeg_bin: String,
+    pub ffprobe_bin: String
+}
 
 pub struct Item {
     pub filename: String,
@@ -29,7 +33,7 @@ impl Item {
 
     fn print_args(&self, cmd: &str, args: &[String]) {
         let args = shell_words::join(args);
-        self.print_info("CMD", &format!("{} {}", cmd, args));
+        self.print_info("CMD", &format!("{cmd} {args}"));
     }
 }
 
@@ -45,10 +49,10 @@ macro_rules! str_vec {
     ($($x:expr),*) => (vec![$($x.to_string()),*]);
 }
 
-fn add_meta(args: &mut Vec<std::string::String>, val: &str, name: &str) {
+fn add_meta(args: &mut Vec<String>, val: &str, name: &str) {
     if !val.is_empty() {
         args.extend(str_vec![
-            "-metadata", &format!("{}={}", name, val)
+            "-metadata", &format!("{name}={val}")
         ]);
     }
 }
@@ -63,11 +67,9 @@ fn render_template(template: &str, tags: &MetaTags) -> Result<String, Box<dyn Er
 }
 
 pub fn validate_template(template: &str) -> Result<(), Box<dyn Error>> {
-    let tags = MetaTags {
-        ..Default::default()
-    };
+    let tags = MetaTags::default();
     if let Err(e) = render_template(template, &tags) {
-        return Err(format!("{}", e).into());
+        return Err(format!("{e}").into());
     }
 
     let tags = MetaTags {
@@ -97,7 +99,7 @@ pub fn validate_template(template: &str) -> Result<(), Box<dyn Error>> {
         file_ext: "1".to_string()
     };
     if let Err(e) = render_template(template, &tags) {
-        return Err(format!("{}", e).into());
+        return Err(format!("{e}").into());
     }
 
     return Ok(());
@@ -108,7 +110,7 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
     let input_filename = &item.filename;
     item.print_info("INFO", &format!("processing {}", &input_filename));
     let canonical_dir = Path::new(input_filename).parent()
-        .ok_or(format!("no parent for {}", input_filename))?.canonicalize()?;
+        .ok_or(format!("no parent for {input_filename}"))?.canonicalize()?;
     let input_dir = canonical_dir.to_str().ok_or("Can't get a string from the canonical path")?;
 
     let meta = extract_meta(input_filename, &item.cue, &progs.ffprobe_bin)?;
@@ -118,12 +120,12 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
     let filename = filename + "." + &app_args.output_ext;
     let output_filename = sanitize_filename(&filename)?;
 
-    let output_path = Path::new(&app_args.output_dir).join(&output_filename);
+    let output_path = Path::new(&app_args.output_dir).join(output_filename);
     let output_path_str = output_path.to_str().ok_or("Can't convert path to string")?;
-    let dir_path = output_path.parent().ok_or(format!("no parent for {}", output_path_str))?;
+    let dir_path = output_path.parent().ok_or(format!("no parent for {output_path_str}"))?;
 
     if !app_args.overwrite && output_path.exists() {
-        return Err(format!("file exists: {}", output_path_str).into());
+        return Err(format!("file exists: {output_path_str}").into());
     }
 
     if !app_args.dry_run {
@@ -164,7 +166,7 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
         ]);
 
         duration_str = if let Some(duration) = cue.duration {
-            format!("{:.3}", duration)
+            format!("{duration:.3}")
         } else {
             String::default()
         };
@@ -214,8 +216,8 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
             cover_names.insert(0, basename);
         }
         if let Some(input_pic_filename) = find_cover_in_dir(input_dir, &cover_names, &app_args.cover_exts) {
-            output_pic_data = pics.conv_pic_if_needed(&input_pic_filename, &app_args, &progs);
-            if output_pic_data == None {
+            output_pic_data = pics.conv_pic_if_needed(&input_pic_filename, app_args, progs);
+            if output_pic_data.is_none() {
                 return Err(format!("can't convert: {}", &input_pic_filename).into());
             }
         } else {
@@ -237,7 +239,7 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
                 },
                 Format::Ogg => {
                     args.extend(str_vec!["-c:v", "libtheora"]);
-                    let pic_conv_args = ffmpeg_conv_pic_args(&app_args);
+                    let pic_conv_args = ffmpeg_conv_pic_args(app_args);
                     args.extend(pic_conv_args);
                 }
             }

@@ -92,7 +92,7 @@ fn first_val(map: &HashMap<String, String>, keys: &[&str]) -> String {
             return v.to_string();
         }
     }
-    return Default::default();
+    return String::default();
 }
 
 fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo>) -> MetaTags {
@@ -106,7 +106,7 @@ fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo
     let file_path = Path::new(filename).canonicalize().unwrap();
     let dir_path = file_path.parent().unwrap();
 
-    let mut keys = hash.keys().into_iter().collect::<Vec<_>>();
+    let mut keys = hash.keys().collect::<Vec<_>>();
     keys.sort_by(|a, b| {
         let ord = a.to_lowercase().cmp(&b.to_lowercase());
         if ord == Ordering::Equal {
@@ -289,8 +289,8 @@ pub fn prepare_filename_tags(meta_tags: &MetaTags, min_track_number_digits: u8) 
     }
 
     if meta_tags.discs == "1" && meta_tags.disc == "1" {
-        meta_tags.discs = "".to_string();
-        meta_tags.disc = "".to_string();
+        meta_tags.discs = String::default();
+        meta_tags.disc = String::default();
     }
 
     if !meta_tags.tracks.is_empty() {
@@ -307,7 +307,7 @@ pub fn prepare_filename_tags(meta_tags: &MetaTags, min_track_number_digits: u8) 
 
 pub fn extract_meta(filename: &str, cue: &Option<CueInfo>, ffprobe_bin: &str) -> Result<FileMeta, Box<dyn Error>> {
     let out = Command::new(ffprobe_bin)
-        .args(&[
+        .args([
             "-v", "quiet",
             "-print_format", "json",
             "-show_format",
@@ -316,7 +316,7 @@ pub fn extract_meta(filename: &str, cue: &Option<CueInfo>, ffprobe_bin: &str) ->
         ])
         .output()?.stdout;
     let out = std::str::from_utf8(&out)?;
-    let meta: Meta = serde_json::from_str(&out)?;
+    let meta: Meta = serde_json::from_str(out)?;
 
     let format_tags = meta.format.tags.unwrap_or_default();
     let tags = fill_tags(&format_tags, filename, cue);

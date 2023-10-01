@@ -51,14 +51,14 @@ fn find_cue_info_in_file(filename: &Path) -> Option<Vec<CueInfo>> {
         return None;
     }
 
-    match open_cue(&filename) {
+    match open_cue(filename) {
         Ok(cue) => {
             if let Some(file) = cue.first_file() {
                 let mut infos = Vec::new();
                 let max_track_index = max_track_index(&file.tracks);
                 for track in &file.tracks {
                     let next_track = track_by_index(&file.tracks, track.id() + 1);
-                    if let Some(info) = cue_track_info(&track, next_track, max_track_index, &cue) {
+                    if let Some(info) = cue_track_info(track, next_track, max_track_index, &cue) {
                         infos.push(info);
                     }
                 }
@@ -66,7 +66,7 @@ fn find_cue_info_in_file(filename: &Path) -> Option<Vec<CueInfo>> {
             }
         },
 
-        Err(e) => println!("{}", e)
+        Err(e) => println!("{e}")
     }
 
     return None;
@@ -100,12 +100,8 @@ fn max_track_index(tracks: &[Track]) -> u8 {
 }
 
 fn track_by_index(tracks: &[Track], id: u8) -> Option<&Track> {
-    for track in tracks {
-        if track.id() == id {
-            return Some(track);
-        }
-    }
-    return None;
+    let track = tracks.iter().find(|&track| track.id() == id);
+    return track;
 }
 
 fn track_start(track: &Track) -> Option<u32> {
@@ -128,7 +124,7 @@ fn extract_comment(cd: &Cuna, tag: &str) -> String {
     let rx_str = String::from(r"(?i)^") + &regex::escape(tag) + r#"\s+(.+)"?$"#;
     let rx = Regex::new(&rx_str).unwrap();
     for comment in &cd.comments.0 {
-        if let Some(m) = rx.captures(&comment) {
+        if let Some(m) = rx.captures(comment) {
             if let Some(m) = m.get(1) {
                 let s = m.as_str();
                 if s.starts_with('"') && s.ends_with('"') && s.len() > 1 {
@@ -139,7 +135,7 @@ fn extract_comment(cd: &Cuna, tag: &str) -> String {
         }
     }
 
-    return Default::default();
+    return String::default();
 }
 
 fn cue_track_info(track: &Track, next_track: Option<&Track>, max_track_index: u8, cd: &Cuna) -> Option<CueInfo> {

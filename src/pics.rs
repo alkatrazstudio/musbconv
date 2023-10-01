@@ -4,7 +4,7 @@
 use crate::concurrent_map::ConcurrentMap;
 use std::process::Command;
 use crate::args::AppArgs;
-use crate::Progs;
+use crate::convert::Progs;
 use crate::formats::Format;
 
 pub type PicsMap = ConcurrentMap<String, Option<Vec<u8>>>;
@@ -75,9 +75,9 @@ pub fn find_cover_in_dir(dir_name: &str, cover_names: &[String], cover_exts: &[S
         let ext = entry.path().extension().unwrap_or_default().to_str()?.to_lowercase();
         let basename = entry.path().file_stem()?.to_str()?.to_lowercase();
 
-        for cover_basename in cover_names.iter() {
+        for cover_basename in cover_names {
             if basename == *cover_basename {
-                for cover_ext in cover_exts.iter() {
+                for cover_ext in cover_exts {
                     if ext == *cover_ext {
                         let canonical_path = entry.path().canonicalize().ok()?;
                         let file_path = canonical_path.to_str()?;

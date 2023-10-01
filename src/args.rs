@@ -76,9 +76,8 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
     let output_ext_help = format!("\
         Extension/format for the output filename.\n\
         The formats have predefined ffmpeg settings:\n\
-        * mp3: {}\n\
-        * ogg: {}",
-            mp3_audio_args, ogg_audio_args);
+        * mp3: {mp3_audio_args}\n\
+        * ogg: {ogg_audio_args}");
 
     let max_threads_count = rayon::max_num_threads() as u64;
     let default_threads_count = std::thread::available_parallelism().unwrap_or(NonZeroUsize::MIN).get() as u64;
@@ -179,7 +178,7 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
 
         .arg(Arg::new("OUTPUT_EXT")
             .long("output-ext")
-            .long_help(&output_ext_help)
+            .long_help(output_ext_help)
             .default_value("mp3")
             .value_parser(["mp3", "ogg"])
             .value_parser(NonEmptyStringValueParser::new())
@@ -217,7 +216,7 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
 
         .arg(Arg::new("PIC_QUALITY")
             .long("pic-quality")
-            .long_help(&pic_quality_help)
+            .long_help(pic_quality_help)
             .value_name("QUALITY")
             .default_value("96")
             .value_parser(RangedU64ValueParser::<u8>::new().range(1..5000)))
@@ -310,9 +309,7 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
             .long("threads")
             .long_help(format!("\
                 Number of threads to simultaneously run ffmpeg in.\n\
-                Must be between 1 and {}.",
-                    max_threads_count
-            ))
+                Must be between 1 and {max_threads_count}."))
             .default_value(default_threads_count.to_string())
             .value_parser(RangedU64ValueParser::<usize>::new().range(1..max_threads_count)))
 
@@ -354,17 +351,17 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
             let cover_names = opt_string_vec(matches.get_one("COVER_NAME"));
             let cover_exts = opt_string_vec(matches.get_one("COVER_EXT"));
 
-            let ffmpeg_opts = matches.get_many("FFMPEG_OPTIONS").unwrap_or_default().map(|s: &String| s.clone()).collect();
+            let ffmpeg_opts = matches.get_many("FFMPEG_OPTIONS").unwrap_or_default().cloned().collect();
 
             let output_ext: &String = matches.get_one("OUTPUT_EXT").unwrap();
             let output_ext_type = match output_ext.as_str() {
                 "mp3" => Format::MP3,
                 "ogg" => Format::Ogg,
-                _ => return Err(format!("Unsupported extension: {}", output_ext).into())
+                _ => return Err(format!("Unsupported extension: {output_ext}").into())
             };
 
             return Ok(Some(AppArgs {
-                input_dirs: matches.get_many("INPUT_DIR").unwrap().map(|s: &String| s.to_owned()).collect(),
+                input_dirs: matches.get_many("INPUT_DIR").unwrap().cloned().collect(),
                 output_dir: matches.get_one::<String>("OUTPUT_DIR").unwrap().clone(),
                 filename_template: matches.get_one::<String>("FILENAME_TEMPLATE").unwrap().clone(),
                 dry_run: matches.get_one::<String>("DRY_RUN").unwrap().as_str() == "y",
@@ -377,8 +374,8 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
                 max_pic_width: *matches.get_one::<u16>("MAX_PIC_WIDTH").unwrap(),
                 pic_quality: *matches.get_one::<u8>("PIC_QUALITY").unwrap(),
                 use_embed_pic: matches.get_one::<String>("USE_EMBED_PIC").unwrap().as_str() == "y",
-                ffmpeg_bin: matches.get_one::<String>("FFMPEG_BIN").map(|s| s.clone()),
-                ffprobe_bin: matches.get_one::<String>("FFPROBE_BIN").map(|s| s.clone()),
+                ffmpeg_bin: matches.get_one::<String>("FFMPEG_BIN").cloned(),
+                ffprobe_bin: matches.get_one::<String>("FFPROBE_BIN").cloned(),
                 threads_count: *matches.get_one::<usize>("THREADS").unwrap(),
                 cover_names,
                 cover_name_from_dirname: matches.get_one::<String>("COVER_NAME_FROM_DIRNAME").unwrap().as_str() == "y",
@@ -389,7 +386,7 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
         }
         Err(e) => match e.kind() {
             ErrorKind::DisplayHelp => {
-                println!("{}", &help_str);
+                println!("{help_str}");
                 return Ok(None);
             },
             ErrorKind::DisplayVersion => {
@@ -397,7 +394,7 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
                 return Ok(None);
             }
             _ => {
-                println!("{}", e);
+                println!("{e}");
                 exit(1);
             }
         }

@@ -14,7 +14,7 @@ pub fn find_files(dirs: &[String], exts: &[String]) -> Result<Vec<Item>, Box<dyn
     for dir in dirs {
         let input_dir = Path::new(dir);
         if !input_dir.exists() {
-            return Err(format!("not found: {}", dir).into());
+            return Err(format!("not found: {dir}").into());
         }
 
         if let Ok(entries) = input_dir.read_dir() {
@@ -83,13 +83,13 @@ fn component_name(component: &Component) -> String {
     return match component {
         Prefix(prefix) => prefix.as_os_str().to_str().unwrap_or_default().to_owned(),
         Normal(s) => s.to_str().unwrap_or_default().to_string(),
-        _ => "".to_string()
+        _ => String::default()
     }
 }
 
 pub fn print_tree(base_dir: &str, filenames: &[&String]) {
     println!();
-    println!("{}", base_dir);
+    println!("{base_dir}");
 
     let mut filenames = filenames.to_vec();
     filenames.sort();
@@ -101,7 +101,7 @@ pub fn print_tree(base_dir: &str, filenames: &[&String]) {
         let components = Path::new(filename).components().collect::<Vec<Component>>();
         let mut is_diff = false;
         for (i, component) in components.iter().enumerate() {
-            let name= component_name(&component);
+            let name= component_name(component);
             if !is_diff {
                 let prev_name = match prev_components.get(i) {
                     Some(c) => component_name(c),

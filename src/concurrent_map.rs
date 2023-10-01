@@ -42,10 +42,10 @@ impl<K: Clone + Eq + Hash, V: Clone> ConcurrentMap<K, V> {
     pub fn set<F>(&self, key: &K, val_func: F) -> Option<V> where F:FnOnce() -> V {
         let i = Arc::new(RwLock::new(None));
 
-        let mut res_lock = Option::None;
+        let mut res_lock = None;
         if let Ok(mut lock) = self.0.write() {
             let map = &mut *lock;
-            if let Some(res) = Self::get_from_map(&map, &key) {
+            if let Some(res) = Self::get_from_map(map, key) {
                 return Some(res);
             }
             if let Ok(lock) = i.write() {
@@ -61,6 +61,7 @@ impl<K: Clone + Eq + Hash, V: Clone> ConcurrentMap<K, V> {
             return ret;
         }
 
+        drop(res_lock);
         panic!();
     }
 
