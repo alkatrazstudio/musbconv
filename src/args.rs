@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // 🄯 2021, Alexey Parfenov <zxed@alkatrazstudio.net>
 
+use crate::formats::Format;
+use clap::builder::{NonEmptyStringValueParser, RangedU64ValueParser};
+use clap::error::ErrorKind;
 use clap::{Arg, ArgAction, Command};
 use std::error::Error;
 use std::io::BufWriter;
 use std::num::NonZeroUsize;
 use std::process::exit;
-use clap::builder::{NonEmptyStringValueParser, RangedU64ValueParser};
-use clap::error::ErrorKind;
-use crate::formats::Format;
 
 mod built {
     include!(concat!(env!("OUT_DIR"), "/built.rs"));
@@ -35,12 +35,14 @@ pub struct AppArgs {
     pub cover_name_from_dirname: bool,
     pub cover_name_from_filename: bool,
     pub cover_exts: Vec<String>,
-    pub min_track_number_digits: u8
+    pub min_track_number_digits: u8,
 }
 
 fn opt_string_vec(opt: Option<&String>) -> Vec<String> {
     let parts = if let Some(opt) = opt {
-         opt.split(',').map(|part| part.to_lowercase().trim().to_string()).collect::<Vec<String>>()
+        opt.split(',')
+            .map(|part| part.to_lowercase().trim().to_string())
+            .collect::<Vec<String>>()
     } else {
         Vec::new()
     };
@@ -50,7 +52,8 @@ fn opt_string_vec(opt: Option<&String>) -> Vec<String> {
 pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
     let v = "v".to_owned() + built::PKG_VERSION;
     let git_hash = built::GIT_COMMIT_HASH.unwrap_or_default();
-    let about = format!("\n\
+    let about = format!(
+        "\n\
         Performs a batch conversion between audio formats using ffmpeg.\n\
         Uses multiple threads if possible.\n\
         Supports CUE sheets and album art.\n\
@@ -61,26 +64,35 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
         Git commit: {}\n\
         Author: Alexey Parfenov (a.k.a. ZXED) <zxed@alkatrazstudio.net>\n\
         Author homepage: https://alkatrazstudio.net",
-            built::BUILT_TIME_UTC, git_hash);
+        built::BUILT_TIME_UTC,
+        git_hash
+    );
 
-    let pic_quality_help = format!("\
+    let pic_quality_help = format!(
+        "\
         Quality for a cover art.\n\
         Only applies when the cover art is bigger than the allowed dimensions\n\
         and needs to be re-encoded.\n\
         {} - lowest quality\n\
         {} - highest quality",
-            Format::MIN_QUALITY, Format::MAX_QUALITY);
+        Format::MIN_QUALITY,
+        Format::MAX_QUALITY
+    );
 
     let mp3_audio_args = Format::audio_args(&Format::MP3).join(" ");
     let ogg_audio_args = Format::audio_args(&Format::Ogg).join(" ");
-    let output_ext_help = format!("\
+    let output_ext_help = format!(
+        "\
         Extension/format for the output filename.\n\
         The formats have predefined ffmpeg settings:\n\
         * mp3: {mp3_audio_args}\n\
-        * ogg: {ogg_audio_args}");
+        * ogg: {ogg_audio_args}"
+    );
 
     let max_threads_count = rayon::max_num_threads() as u64;
-    let default_threads_count = std::thread::available_parallelism().unwrap_or(NonZeroUsize::MIN).get() as u64;
+    let default_threads_count = std::thread::available_parallelism()
+        .unwrap_or(NonZeroUsize::MIN)
+        .get() as u64;
 
     let mut app = Command::new("musbconv")
         .long_about(about)
@@ -351,19 +363,26 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
             let cover_names = opt_string_vec(matches.get_one("COVER_NAME"));
             let cover_exts = opt_string_vec(matches.get_one("COVER_EXT"));
 
-            let ffmpeg_opts = matches.get_many("FFMPEG_OPTIONS").unwrap_or_default().cloned().collect();
+            let ffmpeg_opts = matches
+                .get_many("FFMPEG_OPTIONS")
+                .unwrap_or_default()
+                .cloned()
+                .collect();
 
             let output_ext: &String = matches.get_one("OUTPUT_EXT").unwrap();
             let output_ext_type = match output_ext.as_str() {
                 "mp3" => Format::MP3,
                 "ogg" => Format::Ogg,
-                _ => return Err(format!("Unsupported extension: {output_ext}").into())
+                _ => return Err(format!("Unsupported extension: {output_ext}").into()),
             };
 
             return Ok(Some(AppArgs {
                 input_dirs: matches.get_many("INPUT_DIR").unwrap().cloned().collect(),
                 output_dir: matches.get_one::<String>("OUTPUT_DIR").unwrap().clone(),
-                filename_template: matches.get_one::<String>("FILENAME_TEMPLATE").unwrap().clone(),
+                filename_template: matches
+                    .get_one::<String>("FILENAME_TEMPLATE")
+                    .unwrap()
+                    .clone(),
                 dry_run: matches.get_one::<String>("DRY_RUN").unwrap().as_str() == "y",
                 input_exts,
                 output_ext: output_ext.clone(),
@@ -378,8 +397,16 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
                 ffprobe_bin: matches.get_one::<String>("FFPROBE_BIN").cloned(),
                 threads_count: *matches.get_one::<usize>("THREADS").unwrap(),
                 cover_names,
-                cover_name_from_dirname: matches.get_one::<String>("COVER_NAME_FROM_DIRNAME").unwrap().as_str() == "y",
-                cover_name_from_filename: matches.get_one::<String>("COVER_NAME_FROM_FILENAME").unwrap().as_str() == "y",
+                cover_name_from_dirname: matches
+                    .get_one::<String>("COVER_NAME_FROM_DIRNAME")
+                    .unwrap()
+                    .as_str()
+                    == "y",
+                cover_name_from_filename: matches
+                    .get_one::<String>("COVER_NAME_FROM_FILENAME")
+                    .unwrap()
+                    .as_str()
+                    == "y",
                 cover_exts,
                 min_track_number_digits: *matches.get_one::<u8>("MIN_TRACK_NUMBER_DIGITS").unwrap(),
             }));
@@ -388,7 +415,7 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
             ErrorKind::DisplayHelp => {
                 println!("{help_str}");
                 return Ok(None);
-            },
+            }
             ErrorKind::DisplayVersion => {
                 println!("{}", built::PKG_VERSION);
                 return Ok(None);
@@ -397,6 +424,6 @@ pub fn parse_cli_args() -> Result<Option<AppArgs>, Box<dyn Error>> {
                 println!("{e}");
                 exit(1);
             }
-        }
+        },
     }
 }

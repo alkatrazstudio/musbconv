@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // 🄯 2021, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::sync::{Arc, RwLock};
 
 type ConcurrentMapOptValue<V> = Option<V>;
 type ConcurrentMapOptValueLock<V> = RwLock<ConcurrentMapOptValue<V>>;
@@ -14,13 +14,11 @@ type ConcurrentMapLockedSafeHash<K, V> = RwLock<ConcurrentMapSafeHash<K, V>>;
 pub struct ConcurrentMap<K, V>(Arc<ConcurrentMapLockedSafeHash<K, V>>);
 
 impl<K: Clone + Eq + Hash, V: Clone> ConcurrentMap<K, V> {
-    pub fn new() -> Self
-    {
+    pub fn new() -> Self {
         return Self(Arc::new(RwLock::new(HashMap::new())));
     }
 
-    fn get_from_map(map: &HashMap<K, Arc<RwLock<Option<V>>>>, key: &K) -> Option<V>
-    {
+    fn get_from_map(map: &HashMap<K, Arc<RwLock<Option<V>>>>, key: &K) -> Option<V> {
         if let Some(res) = map.get(key) {
             if let Ok(res_guard) = res.read() {
                 if let Some(s) = &*res_guard {
@@ -39,7 +37,10 @@ impl<K: Clone + Eq + Hash, V: Clone> ConcurrentMap<K, V> {
         return None;
     }
 
-    pub fn set<F>(&self, key: &K, val_func: F) -> Option<V> where F:FnOnce() -> V {
+    pub fn set<F>(&self, key: &K, val_func: F) -> Option<V>
+    where
+        F: FnOnce() -> V,
+    {
         let i = Arc::new(RwLock::new(None));
 
         let mut res_lock = None;
@@ -65,7 +66,10 @@ impl<K: Clone + Eq + Hash, V: Clone> ConcurrentMap<K, V> {
         panic!();
     }
 
-    pub fn set_if_not_exists<F>(&self, key: &K, val_func: F) -> Option<V> where F:FnOnce() -> V {
+    pub fn set_if_not_exists<F>(&self, key: &K, val_func: F) -> Option<V>
+    where
+        F: FnOnce() -> V,
+    {
         if let Some(res) = self.get(key) {
             return Some(res);
         }
@@ -75,6 +79,6 @@ impl<K: Clone + Eq + Hash, V: Clone> ConcurrentMap<K, V> {
 
 impl<K: Eq + Hash, V: Clone> Clone for ConcurrentMap<K, V> {
     fn clone(&self) -> Self {
-        return Self(self.0.clone())
+        return Self(self.0.clone());
     }
 }

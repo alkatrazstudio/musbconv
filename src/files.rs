@@ -2,11 +2,11 @@
 // 🄯 2021, Alexey Parfenov <zxed@alkatrazstudio.net>
 
 use crate::convert::Item;
-use std::path::{Path, Component};
 use crate::cue::find_cue_info;
 use lexical_sort::natural_lexical_only_alnum_cmp;
-use std::path::Component::{Prefix, Normal};
 use std::error::Error;
+use std::path::Component::{Normal, Prefix};
+use std::path::{Component, Path};
 
 pub fn find_files(dirs: &[String], exts: &[String]) -> Result<Vec<Item>, Box<dyn Error>> {
     let mut items = Vec::new();
@@ -47,7 +47,7 @@ pub fn find_files(dirs: &[String], exts: &[String]) -> Result<Vec<Item>, Box<dyn
                                             basename: basename.to_string(),
                                             index: 0,
                                             total: 0,
-                                            cue: None
+                                            cue: None,
                                         });
                                     } else {
                                         for info in infos {
@@ -56,7 +56,7 @@ pub fn find_files(dirs: &[String], exts: &[String]) -> Result<Vec<Item>, Box<dyn
                                                 basename: basename.to_string(),
                                                 index: 0,
                                                 total: 0,
-                                                cue: Some(info)
+                                                cue: Some(info),
                                             });
                                         }
                                     }
@@ -83,8 +83,8 @@ fn component_name(component: &Component) -> String {
     return match component {
         Prefix(prefix) => prefix.as_os_str().to_str().unwrap_or_default().to_owned(),
         Normal(s) => s.to_str().unwrap_or_default().to_string(),
-        _ => String::default()
-    }
+        _ => String::default(),
+    };
 }
 
 pub fn print_tree(base_dir: &str, filenames: &[&String]) {
@@ -101,11 +101,11 @@ pub fn print_tree(base_dir: &str, filenames: &[&String]) {
         let components = Path::new(filename).components().collect::<Vec<Component>>();
         let mut is_diff = false;
         for (i, component) in components.iter().enumerate() {
-            let name= component_name(component);
+            let name = component_name(component);
             if !is_diff {
                 let prev_name = match prev_components.get(i) {
                     Some(c) => component_name(c),
-                    None => String::default()
+                    None => String::default(),
                 };
 
                 if name == prev_name {

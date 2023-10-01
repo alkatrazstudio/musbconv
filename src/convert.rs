@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // 🄯 2021, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-use crate::cue::CueInfo;
-use crate::pics::{PicsMap, find_cover_in_dir, ffmpeg_conv_pic_args};
 use crate::args::AppArgs;
-use std::error::Error;
-use std::path::Path;
-use crate::meta::{extract_meta, prepare_filename_tags, MetaTags};
-use handlebars::Handlebars;
-use std::process::Command;
-use std::io::Write;
-use path_dedot::ParseDot;
+use crate::cue::CueInfo;
 use crate::formats::Format;
+use crate::meta::{extract_meta, prepare_filename_tags, MetaTags};
+use crate::pics::{ffmpeg_conv_pic_args, find_cover_in_dir, PicsMap};
+use handlebars::Handlebars;
+use path_dedot::ParseDot;
+use std::error::Error;
+use std::io::Write;
+use std::path::Path;
+use std::process::Command;
 
 pub struct Progs {
     pub ffmpeg_bin: String,
-    pub ffprobe_bin: String
+    pub ffprobe_bin: String,
 }
 
 pub struct Item {
@@ -23,7 +23,7 @@ pub struct Item {
     pub basename: String,
     pub index: usize,
     pub total: usize,
-    pub cue: Option<CueInfo>
+    pub cue: Option<CueInfo>,
 }
 
 impl Item {
@@ -51,9 +51,7 @@ macro_rules! str_vec {
 
 fn add_meta(args: &mut Vec<String>, val: &str, name: &str) {
     if !val.is_empty() {
-        args.extend(str_vec![
-            "-metadata", &format!("{name}={val}")
-        ]);
+        args.extend(str_vec!["-metadata", &format!("{name}={val}")]);
     }
 }
 
@@ -96,7 +94,7 @@ pub fn validate_template(template: &str) -> Result<(), Box<dyn Error>> {
         file_name: "1".to_string(),
         dir_name: "1".to_string(),
         file_base: "1".to_string(),
-        file_ext: "1".to_string()
+        file_ext: "1".to_string(),
     };
     if let Err(e) = render_template(template, &tags) {
         return Err(format!("{e}").into());
@@ -105,13 +103,21 @@ pub fn validate_template(template: &str) -> Result<(), Box<dyn Error>> {
     return Ok(());
 }
 
-pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs) -> Result<String, Box<dyn Error>>
-{
+pub fn conv_item(
+    item: &Item,
+    pics: &PicsMap,
+    app_args: &AppArgs,
+    progs: &Progs,
+) -> Result<String, Box<dyn Error>> {
     let input_filename = &item.filename;
     item.print_info("INFO", &format!("processing {}", &input_filename));
-    let canonical_dir = Path::new(input_filename).parent()
-        .ok_or(format!("no parent for {input_filename}"))?.canonicalize()?;
-    let input_dir = canonical_dir.to_str().ok_or("Can't get a string from the canonical path")?;
+    let canonical_dir = Path::new(input_filename)
+        .parent()
+        .ok_or(format!("no parent for {input_filename}"))?
+        .canonicalize()?;
+    let input_dir = canonical_dir
+        .to_str()
+        .ok_or("Can't get a string from the canonical path")?;
 
     let meta = extract_meta(input_filename, &item.cue, &progs.ffprobe_bin)?;
     let filename_tags = prepare_filename_tags(&meta.tags, app_args.min_track_number_digits);
@@ -122,7 +128,9 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
 
     let output_path = Path::new(&app_args.output_dir).join(output_filename);
     let output_path_str = output_path.to_str().ok_or("Can't convert path to string")?;
-    let dir_path = output_path.parent().ok_or(format!("no parent for {output_path_str}"))?;
+    let dir_path = output_path
+        .parent()
+        .ok_or(format!("no parent for {output_path_str}"))?;
 
     if !app_args.overwrite && output_path.exists() {
         return Err(format!("file exists: {output_path_str}").into());
@@ -132,11 +140,7 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
         std::fs::create_dir_all(dir_path)?;
     }
 
-    let mut args = str_vec![
-        "-hide_banner", "-nostats",
-        "-loglevel", "warning",
-        "-y"
-    ];
+    let mut args = str_vec!["-hide_banner", "-nostats", "-loglevel", "warning", "-y"];
 
     let mut audio_args = app_args.output_ext_type.audio_args();
 
@@ -152,7 +156,11 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
     add_meta(&mut audio_args, &meta.tags.year, "year");
 
     if !meta.tags.track.is_empty() && !meta.tags.tracks.is_empty() {
-        add_meta(&mut audio_args, &(meta.tags.track + "/" + &meta.tags.tracks), "track");
+        add_meta(
+            &mut audio_args,
+            &(meta.tags.track + "/" + &meta.tags.tracks),
+            "track",
+        );
     } else {
         add_meta(&mut audio_args, &meta.tags.track, "track");
     }
@@ -161,9 +169,7 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
     let duration_str;
     if let Some(cue) = &item.cue {
         start_str = format!("{:.3}", cue.start);
-        args.extend(str_vec![
-            "-ss:a", &start_str
-        ]);
+        args.extend(str_vec!["-ss:a", &start_str]);
 
         duration_str = if let Some(duration) = cue.duration {
             format!("{duration:.3}")
@@ -172,22 +178,22 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
         };
 
         if !duration_str.is_empty() {
-            args.extend(str_vec![
-                "-t:a", &duration_str
-            ]);
+            args.extend(str_vec!["-t:a", &duration_str]);
         }
     }
     let output;
 
-    args.extend(str_vec![
-        "-i", &input_filename
-    ]);
+    args.extend(str_vec!["-i", &input_filename]);
     if meta.has_pic && app_args.use_embed_pic {
         args.extend(audio_args);
 
         let pic_args = ffmpeg_conv_pic_args(app_args);
         args.extend(pic_args);
-        let mut args = args.iter().chain(&app_args.ffmpeg_opts).cloned().collect::<Vec<String>>();
+        let mut args = args
+            .iter()
+            .chain(&app_args.ffmpeg_opts)
+            .cloned()
+            .collect::<Vec<String>>();
         args.push(output_path_str.to_string());
 
         item.print_args(&progs.ffmpeg_bin, &args);
@@ -200,22 +206,30 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
         let output_pic_data;
         let mut cover_names = app_args.cover_names.clone();
         if app_args.cover_name_from_dirname {
-            let dirname = canonical_dir.file_name()
+            let dirname = canonical_dir
+                .file_name()
                 .ok_or("Can't get a dirname from the canonical path")?
                 .to_str()
                 .ok_or("Can't convert a dirname to string")?
-                .to_lowercase().trim().to_string();
+                .to_lowercase()
+                .trim()
+                .to_string();
             cover_names.insert(0, dirname);
         }
         if app_args.cover_name_from_filename {
-            let basename = Path::new(input_filename).file_stem()
+            let basename = Path::new(input_filename)
+                .file_stem()
                 .ok_or("Can't get a file basename from the canonical path")?
                 .to_str()
                 .ok_or("Can't convert a file basename to string")?
-                .to_lowercase().trim().to_string();
+                .to_lowercase()
+                .trim()
+                .to_string();
             cover_names.insert(0, basename);
         }
-        if let Some(input_pic_filename) = find_cover_in_dir(input_dir, &cover_names, &app_args.cover_exts) {
+        if let Some(input_pic_filename) =
+            find_cover_in_dir(input_dir, &cover_names, &app_args.cover_exts)
+        {
             output_pic_data = pics.conv_pic_if_needed(&input_pic_filename, app_args, progs);
             if output_pic_data.is_none() {
                 return Err(format!("can't convert: {}", &input_pic_filename).into());
@@ -225,32 +239,41 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
         }
 
         if let Some(output_pic_data) = output_pic_data {
-            args.extend(str_vec![
-                "-i", "-"
-            ]);
+            args.extend(str_vec!["-i", "-"]);
             args.extend(audio_args);
             args.extend(str_vec![
-                "-map", "0:a", "-map", "1:v",
-                "-metadata:s:v", "title=Album cover", "-metadata:s:v", "comment=Cover (front)"
+                "-map",
+                "0:a",
+                "-map",
+                "1:v",
+                "-metadata:s:v",
+                "title=Album cover",
+                "-metadata:s:v",
+                "comment=Cover (front)"
             ]);
             match app_args.output_ext_type {
                 Format::MP3 => {
                     args.extend(str_vec!["-c:v", "copy"]);
-                },
+                }
                 Format::Ogg => {
                     args.extend(str_vec!["-c:v", "libtheora"]);
                     let pic_conv_args = ffmpeg_conv_pic_args(app_args);
                     args.extend(pic_conv_args);
                 }
             }
-            let mut args = args.iter().chain(&app_args.ffmpeg_opts).cloned().collect::<Vec<String>>();
+            let mut args = args
+                .iter()
+                .chain(&app_args.ffmpeg_opts)
+                .cloned()
+                .collect::<Vec<String>>();
             args.push(output_path_str.into());
 
             item.print_args(&progs.ffmpeg_bin, &args);
             if app_args.dry_run {
                 output = None;
             } else {
-                let mut proc = Command::new(&progs.ffmpeg_bin).args(&args)
+                let mut proc = Command::new(&progs.ffmpeg_bin)
+                    .args(&args)
                     .stdin(std::process::Stdio::piped())
                     .stderr(std::process::Stdio::piped())
                     .spawn()?;
@@ -262,7 +285,11 @@ pub fn conv_item(item: &Item, pics: &PicsMap, app_args: &AppArgs, progs: &Progs)
             }
         } else {
             args.extend(audio_args);
-            let mut args = args.iter().chain(&app_args.ffmpeg_opts).cloned().collect::<Vec<String>>();
+            let mut args = args
+                .iter()
+                .chain(&app_args.ffmpeg_opts)
+                .cloned()
+                .collect::<Vec<String>>();
             args.push(output_path_str.into());
 
             item.print_args(&progs.ffmpeg_bin, &args);

@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // 🄯 2021, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-use std::path::Path;
-use cuna::Cuna;
 use cuna::track::Track;
+use cuna::Cuna;
 use regex::Regex;
+use std::char::REPLACEMENT_CHARACTER;
 use std::error::Error;
 use std::fs::File;
-use std::str::FromStr;
 use std::io::Read;
-use std::char::REPLACEMENT_CHARACTER;
+use std::path::Path;
+use std::str::FromStr;
 
 const CUE_FRAMES_IN_SECOND: u8 = 75;
 
@@ -47,7 +47,7 @@ fn open_cue(path: &Path) -> Result<Cuna, Box<dyn Error>> {
 }
 
 fn find_cue_info_in_file(filename: &Path) -> Option<Vec<CueInfo>> {
-    if ! filename.exists() {
+    if !filename.exists() {
         return None;
     }
 
@@ -64,9 +64,9 @@ fn find_cue_info_in_file(filename: &Path) -> Option<Vec<CueInfo>> {
                 }
                 return Some(infos);
             }
-        },
+        }
 
-        Err(e) => println!("{e}")
+        Err(e) => println!("{e}"),
     }
 
     return None;
@@ -128,7 +128,7 @@ fn extract_comment(cd: &Cuna, tag: &str) -> String {
             if let Some(m) = m.get(1) {
                 let s = m.as_str();
                 if s.starts_with('"') && s.ends_with('"') && s.len() > 1 {
-                    return s[1..s.len()-1].trim().to_owned();
+                    return s[1..s.len() - 1].trim().to_owned();
                 }
                 return s.trim().to_owned();
             }
@@ -138,7 +138,12 @@ fn extract_comment(cd: &Cuna, tag: &str) -> String {
     return String::default();
 }
 
-fn cue_track_info(track: &Track, next_track: Option<&Track>, max_track_index: u8, cd: &Cuna) -> Option<CueInfo> {
+fn cue_track_info(
+    track: &Track,
+    next_track: Option<&Track>,
+    max_track_index: u8,
+    cd: &Cuna,
+) -> Option<CueInfo> {
     if let Some(start) = track_start(track) {
         let mut duration = None;
         if let Some(next_track) = next_track {
@@ -149,7 +154,8 @@ fn cue_track_info(track: &Track, next_track: Option<&Track>, max_track_index: u8
             }
         }
 
-        let duration = duration.map(|duration| f64::from(duration) / f64::from(CUE_FRAMES_IN_SECOND));
+        let duration =
+            duration.map(|duration| f64::from(duration) / f64::from(CUE_FRAMES_IN_SECOND));
 
         return Some(CueInfo {
             start: f64::from(start) / f64::from(CUE_FRAMES_IN_SECOND),
@@ -164,7 +170,7 @@ fn cue_track_info(track: &Track, next_track: Option<&Track>, max_track_index: u8
             disc_number: extract_comment(cd, "DISCNUMBER"),
             total_discs: extract_comment(cd, "TOTALDISCS"),
             track: track.id().to_string().trim().to_string(),
-            tracks: max_track_index.to_string().trim().to_string()
+            tracks: max_track_index.to_string().trim().to_string(),
         });
     }
     return None;

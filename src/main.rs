@@ -19,15 +19,15 @@
     clippy::option_if_let_else,
 )]
 
-mod concurrent_map;
-mod meta;
-mod pics;
 mod args;
-mod cue;
+mod concurrent_map;
 mod convert;
+mod cue;
+mod entry;
 mod files;
 mod formats;
-mod entry;
+mod meta;
+mod pics;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     return entry::main();

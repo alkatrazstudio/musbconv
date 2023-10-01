@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // 🄯 2021, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-use std::process::Command;
-use std::collections::HashMap;
-use serde_json::Value;
-use serde::{Deserialize, Serialize};
-use regex::{Regex};
-use lazy_static::lazy_static;
-use std::path::Path;
-use std::ffi::OsStr;
-use std::error::Error;
-use sanitize_filename::{sanitize_with_options, Options};
 use crate::cue::CueInfo;
-use std::cmp::{Ordering, max};
+use lazy_static::lazy_static;
+use regex::Regex;
+use sanitize_filename::{sanitize_with_options, Options};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::cmp::{max, Ordering};
+use std::collections::HashMap;
+use std::error::Error;
+use std::ffi::OsStr;
+use std::path::Path;
+use std::process::Command;
 
 #[derive(Serialize, Deserialize)]
 pub struct MetaStreamTags {
-    comment: Option<String>
+    comment: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -24,7 +24,7 @@ pub struct MetaStream {
     codec_type: String,
     width: Option<u32>,
     height: Option<u32>,
-    tags: Option<MetaStreamTags>
+    tags: Option<MetaStreamTags>,
 }
 
 impl MetaStreamTags {
@@ -37,13 +37,13 @@ impl MetaStream {
 
 #[derive(Serialize, Deserialize)]
 pub struct MetaFormat {
-    tags: Option<HashMap<String, Value>>
+    tags: Option<HashMap<String, Value>>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Meta {
     streams: Vec<MetaStream>,
-    format: MetaFormat
+    format: MetaFormat,
 }
 
 #[derive(Serialize, Default, Clone)]
@@ -71,7 +71,7 @@ pub struct MetaTags {
     pub file_name: String,
     pub dir_name: String,
     pub file_base: String,
-    pub file_ext: String
+    pub file_ext: String,
 }
 
 #[derive(Default)]
@@ -79,7 +79,7 @@ pub struct FileMeta {
     pub has_pic: bool,
     pub pic_width: u32,
     pub pic_height: u32,
-    pub tags: MetaTags
+    pub tags: MetaTags,
 }
 
 fn to_str(x: Option<&OsStr>) -> String {
@@ -147,7 +147,7 @@ fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo
         file_name: to_str(file_path.file_name()),
         dir_name: to_str(dir_path.file_name()),
         file_base: to_str(file_path.file_stem()),
-        file_ext: to_str(file_path.extension())
+        file_ext: to_str(file_path.extension()),
     };
 
     if let Some(cue) = cue {
@@ -200,11 +200,14 @@ fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo
 }
 
 fn filesafe_str(s: &str) -> String {
-    return sanitize_with_options(s, Options {
-        replacement: "",
-        windows: false,
-        truncate: true
-    });
+    return sanitize_with_options(
+        s,
+        Options {
+            replacement: "",
+            windows: false,
+            truncate: true,
+        },
+    );
 }
 
 pub fn sanitize_tags(meta: &MetaTags) -> MetaTags {
@@ -232,8 +235,8 @@ pub fn sanitize_tags(meta: &MetaTags) -> MetaTags {
         file_name: filesafe_str(&meta.file_name),
         dir_name: filesafe_str(&meta.dir_name),
         file_base: filesafe_str(&meta.file_base),
-        file_ext: filesafe_str(&meta.file_ext)
-    }
+        file_ext: filesafe_str(&meta.file_ext),
+    };
 }
 
 pub fn prepare_filename_tags(meta_tags: &MetaTags, min_track_number_digits: u8) -> MetaTags {
@@ -294,10 +297,14 @@ pub fn prepare_filename_tags(meta_tags: &MetaTags, min_track_number_digits: u8) 
     }
 
     if !meta_tags.tracks.is_empty() {
-        meta_tags.tracks = format!("{:0>width$}", meta_tags.tracks, width = min_track_number_digits as usize);
+        meta_tags.tracks = format!(
+            "{:0>width$}",
+            meta_tags.tracks,
+            width = min_track_number_digits as usize
+        );
     }
     if !meta_tags.track.is_empty() {
-        let tracks_digits_count = max(meta_tags.tracks.len(), min_track_number_digits as usize) ;
+        let tracks_digits_count = max(meta_tags.tracks.len(), min_track_number_digits as usize);
         meta_tags.track = format!("{:0>width$}", meta_tags.track, width = tracks_digits_count);
     }
 
@@ -305,16 +312,23 @@ pub fn prepare_filename_tags(meta_tags: &MetaTags, min_track_number_digits: u8) 
     return meta_tags;
 }
 
-pub fn extract_meta(filename: &str, cue: &Option<CueInfo>, ffprobe_bin: &str) -> Result<FileMeta, Box<dyn Error>> {
+pub fn extract_meta(
+    filename: &str,
+    cue: &Option<CueInfo>,
+    ffprobe_bin: &str,
+) -> Result<FileMeta, Box<dyn Error>> {
     let out = Command::new(ffprobe_bin)
         .args([
-            "-v", "quiet",
-            "-print_format", "json",
+            "-v",
+            "quiet",
+            "-print_format",
+            "json",
             "-show_format",
             "-show_streams",
-            filename
+            filename,
         ])
-        .output()?.stdout;
+        .output()?
+        .stdout;
     let out = std::str::from_utf8(&out)?;
     let meta: Meta = serde_json::from_str(out)?;
 
