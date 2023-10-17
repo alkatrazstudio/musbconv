@@ -1,6 +1,12 @@
 # musbconv - CHANGELOG
 
 
+## v0.5.1 (October 17, 2023)
+
+- Added: `--cover-name-from-dirname` and `--cover-name-from-filename` arguments
+- Improved: the default and maximum number of threads are now displayed in the help text
+
+
 ## v0.5.0 (August 15, 2021)
 
 - Changed: TOTALDISCS=1 is now ignored when constructing the filename
