@@ -113,13 +113,13 @@ pub fn conv_item(
     item.print_info("INFO", &format!("processing {}", &input_filename));
     let canonical_dir = Path::new(input_filename)
         .parent()
-        .ok_or(format!("no parent for {input_filename}"))?
+        .ok_or_else(|| format!("no parent for {input_filename}"))?
         .canonicalize()?;
     let input_dir = canonical_dir
         .to_str()
         .ok_or("Can't get a string from the canonical path")?;
 
-    let meta = extract_meta(input_filename, &item.cue, &progs.ffprobe_bin)?;
+    let meta = extract_meta(input_filename, item.cue.as_ref(), &progs.ffprobe_bin)?;
     let filename_tags = prepare_filename_tags(&meta.tags, app_args.min_track_number_digits);
 
     let filename = render_template(&app_args.filename_template, &filename_tags)?;
@@ -130,7 +130,7 @@ pub fn conv_item(
     let output_path_str = output_path.to_str().ok_or("Can't convert path to string")?;
     let dir_path = output_path
         .parent()
-        .ok_or(format!("no parent for {output_path_str}"))?;
+        .ok_or_else(|| format!("no parent for {output_path_str}"))?;
 
     if !app_args.overwrite && output_path.exists() {
         return Err(format!("file exists: {output_path_str}").into());
@@ -301,10 +301,10 @@ pub fn conv_item(
         }
     }
 
-    if let Some(output) = output {
-        if output.status.code().ok_or("Cannot get the exit code")? != 0 {
-            return Err(std::str::from_utf8(&output.stderr)?.into());
-        }
+    if let Some(output) = output
+        && output.status.code().ok_or("Cannot get the exit code")? != 0
+    {
+        return Err(std::str::from_utf8(&output.stderr)?.into());
     }
 
     return Ok(output_path_str.into());

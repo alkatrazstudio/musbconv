@@ -7,12 +7,12 @@
     clippy::needless_return,
 
     // pedantic
-    clippy::struct_excessive_bools,
     clippy::module_name_repetitions,
-    clippy::too_many_lines,
     clippy::redundant_closure,
     clippy::redundant_closure_for_method_calls,
     clippy::similar_names,
+    clippy::struct_excessive_bools,
+    clippy::too_many_lines,
 
     // nursery
     clippy::cognitive_complexity,

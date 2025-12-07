@@ -2,7 +2,6 @@
 // 🄯 2021, Alexey Parfenov <zxed@alkatrazstudio.net>
 
 use crate::cue::CueInfo;
-use lazy_static::lazy_static;
 use regex::Regex;
 use sanitize_filename::{Options, sanitize_with_options};
 use serde::{Deserialize, Serialize};
@@ -13,6 +12,7 @@ use std::error::Error;
 use std::ffi::OsStr;
 use std::path::Path;
 use std::process::Command;
+use std::sync::LazyLock;
 
 #[derive(Serialize, Deserialize)]
 pub struct MetaStreamTags {
@@ -89,17 +89,15 @@ fn to_str(x: Option<&OsStr>) -> String {
 fn first_val(map: &HashMap<String, String>, keys: &[&str]) -> String {
     for key in keys {
         if let Some(v) = map.get(*key) {
-            return v.to_string();
+            return v.clone();
         }
     }
     return String::default();
 }
 
-fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo>) -> MetaTags {
-    lazy_static! {
-        static ref RX_ALPHA: Regex = Regex::new(r"[^a-z]").unwrap();
-        static ref RX_TRACK: Regex = Regex::new(r"^(\d+)/(\d+)$").unwrap();
-    }
+fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: Option<&CueInfo>) -> MetaTags {
+    static RX_ALPHA: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[^a-z]").unwrap());
+    static RX_TRACK: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(\d+)/(\d+)$").unwrap());
 
     let mut tags = HashMap::new();
 
@@ -152,48 +150,48 @@ fn fill_tags(hash: &HashMap<String, Value>, filename: &str, cue: &Option<CueInfo
 
     if let Some(cue) = cue {
         if !cue.album.is_empty() {
-            meta_tags.album = cue.album.clone();
+            meta_tags.album.clone_from(&cue.album);
         }
         if !cue.title.is_empty() {
-            meta_tags.title = cue.title.clone();
+            meta_tags.title.clone_from(&cue.title);
         }
         if !cue.songwriter.is_empty() {
-            meta_tags.songwriter = cue.songwriter.clone();
+            meta_tags.songwriter.clone_from(&cue.songwriter);
         }
         if !cue.genre.is_empty() {
-            meta_tags.genre = cue.genre.clone();
+            meta_tags.genre.clone_from(&cue.genre);
         }
         if !cue.performer.is_empty() {
-            meta_tags.performer = cue.performer.clone();
-            meta_tags.artist = cue.performer.clone();
+            meta_tags.performer.clone_from(&cue.performer);
+            meta_tags.artist.clone_from(&cue.performer);
         }
         if !cue.date.is_empty() {
-            meta_tags.date = cue.date.clone();
+            meta_tags.date.clone_from(&cue.date);
         }
         if !cue.disc_id.is_empty() {
-            meta_tags.disc_id = cue.disc_id.clone();
+            meta_tags.disc_id.clone_from(&cue.disc_id);
         }
         if !cue.disc_number.is_empty() {
-            meta_tags.disc = cue.disc_number.clone();
+            meta_tags.disc.clone_from(&cue.disc_number);
         }
         if !cue.total_discs.is_empty() {
-            meta_tags.discs = cue.total_discs.clone();
+            meta_tags.discs.clone_from(&cue.total_discs);
         }
         if !cue.track.is_empty() {
-            meta_tags.track = cue.track.clone();
+            meta_tags.track.clone_from(&cue.track);
         }
         if !cue.tracks.is_empty() {
-            meta_tags.tracks = cue.tracks.clone();
+            meta_tags.tracks.clone_from(&cue.tracks);
         }
     }
 
-    if let Some(m) = RX_TRACK.captures(&meta_tags.track) {
-        if let (Some(m1), Some(m2)) = (m.get(1), m.get(2)) {
-            if meta_tags.tracks.is_empty() {
-                meta_tags.tracks = m2.as_str().to_string();
-            }
-            meta_tags.track = m1.as_str().to_string();
+    if let Some(m) = RX_TRACK.captures(&meta_tags.track)
+        && let (Some(m1), Some(m2)) = (m.get(1), m.get(2))
+    {
+        if meta_tags.tracks.is_empty() {
+            meta_tags.tracks = m2.as_str().to_string();
         }
+        meta_tags.track = m1.as_str().to_string();
     }
 
     return meta_tags;
@@ -243,9 +241,7 @@ pub fn prepare_filename_tags(meta_tags: &MetaTags, min_track_number_digits: u8) 
     let mut meta_tags = meta_tags.clone();
 
     if meta_tags.year.is_empty() && !meta_tags.date.is_empty() {
-        lazy_static! {
-            static ref RX: Regex = Regex::new(r"^\d{4}").unwrap();
-        }
+        static RX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\d{4}").unwrap());
         if let Some(m) = RX.find(&meta_tags.date) {
             meta_tags.year = m.as_str().into();
         }
@@ -314,7 +310,7 @@ pub fn prepare_filename_tags(meta_tags: &MetaTags, min_track_number_digits: u8) 
 
 pub fn extract_meta(
     filename: &str,
-    cue: &Option<CueInfo>,
+    cue: Option<&CueInfo>,
     ffprobe_bin: &str,
 ) -> Result<FileMeta, Box<dyn Error>> {
     let out = Command::new(ffprobe_bin)
@@ -341,20 +337,16 @@ pub fn extract_meta(
     };
 
     for s in meta.streams {
-        if s.codec_type == MetaStream::VIDEO {
-            if let Some(tags) = s.tags {
-                if let Some(comment) = tags.comment {
-                    if comment == MetaStreamTags::COVER {
-                        if let Some(w) = s.width {
-                            if let Some(h) = s.height {
-                                fmeta.has_pic = true;
-                                fmeta.pic_height = h;
-                                fmeta.pic_width = w;
-                            }
-                        }
-                    }
-                }
-            }
+        if s.codec_type == MetaStream::VIDEO
+            && let Some(tags) = s.tags
+            && let Some(comment) = tags.comment
+            && comment == MetaStreamTags::COVER
+            && let Some(w) = s.width
+            && let Some(h) = s.height
+        {
+            fmeta.has_pic = true;
+            fmeta.pic_height = h;
+            fmeta.pic_width = w;
         }
     }
 

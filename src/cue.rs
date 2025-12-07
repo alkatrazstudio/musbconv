@@ -124,14 +124,14 @@ fn extract_comment(cd: &Cuna, tag: &str) -> String {
     let rx_str = String::from(r"(?i)^") + &regex::escape(tag) + r#"\s+(.+)"?$"#;
     let rx = Regex::new(&rx_str).unwrap();
     for comment in &cd.comments.0 {
-        if let Some(m) = rx.captures(comment) {
-            if let Some(m) = m.get(1) {
-                let s = m.as_str();
-                if s.starts_with('"') && s.ends_with('"') && s.len() > 1 {
-                    return s[1..s.len() - 1].trim().to_owned();
-                }
-                return s.trim().to_owned();
+        if let Some(m) = rx.captures(comment)
+            && let Some(m) = m.get(1)
+        {
+            let s = m.as_str();
+            if s.starts_with('"') && s.ends_with('"') && s.len() > 1 {
+                return s[1..s.len() - 1].trim().to_owned();
             }
+            return s.trim().to_owned();
         }
     }
 
@@ -145,14 +145,14 @@ fn cue_track_info(
     cd: &Cuna,
 ) -> Option<CueInfo> {
     if let Some(start) = track_start(track) {
-        let mut duration = None;
-        if let Some(next_track) = next_track {
-            if let Some(next_start) = track_start(next_track) {
-                if next_start > start {
-                    duration = Some(next_start - start);
-                }
-            }
-        }
+        let duration = if let Some(next_track) = next_track
+            && let Some(next_start) = track_start(next_track)
+            && next_start > start
+        {
+            Some(next_start - start)
+        } else {
+            None
+        };
 
         let duration =
             duration.map(|duration| f64::from(duration) / f64::from(CUE_FRAMES_IN_SECOND));

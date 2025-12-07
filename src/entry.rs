@@ -36,8 +36,8 @@ fn run(items: &[Item], args: &AppArgs, progs: &Progs) -> Result<Vec<ItemResult>,
     return Ok(filenames);
 }
 
-fn find_prog(name: &str, arg: &Option<String>) -> Result<String, Box<dyn Error>> {
-    if let Some(a) = arg.clone() {
+fn find_prog(name: &str, arg: Option<&String>) -> Result<String, Box<dyn Error>> {
+    if let Some(a) = arg {
         let path = Path::new(&a);
         if !path.exists() {
             return Err(format!(
@@ -62,8 +62,8 @@ fn find_prog(name: &str, arg: &Option<String>) -> Result<String, Box<dyn Error>>
 
 fn find_progs(args: &AppArgs) -> Result<Progs, Box<dyn Error>> {
     return Ok(Progs {
-        ffmpeg_bin: find_prog("ffmpeg", &args.ffmpeg_bin)?,
-        ffprobe_bin: find_prog("ffprobe", &args.ffprobe_bin)?,
+        ffmpeg_bin: find_prog("ffmpeg", args.ffmpeg_bin.as_ref())?,
+        ffprobe_bin: find_prog("ffprobe", args.ffprobe_bin.as_ref())?,
     });
 }
 
@@ -86,15 +86,15 @@ pub fn main() -> Result<(), Box<dyn Error>> {
                 ItemResult::Filename(filename) => {
                     let mut exists = false;
                     for b in (a + 1)..n {
-                        if let ItemResult::Filename(other_filename) = &filenames[b] {
-                            if filename.eq(other_filename) {
-                                exists = true;
-                                errs.push(format!(
-                                    "{}: resolves to {} just as {}",
-                                    &items[a].filename, &filename, &items[b].filename
-                                ));
-                                break;
-                            }
+                        if let ItemResult::Filename(other_filename) = &filenames[b]
+                            && filename.eq(other_filename)
+                        {
+                            exists = true;
+                            errs.push(format!(
+                                "{}: resolves to {} just as {}",
+                                &items[a].filename, &filename, &items[b].filename
+                            ));
+                            break;
                         }
                     }
 
