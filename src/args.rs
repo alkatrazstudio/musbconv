@@ -10,6 +10,7 @@ use std::io::BufWriter;
 use std::num::NonZeroUsize;
 use std::process::exit;
 
+#[allow(clippy::all, clippy::pedantic, clippy::nursery)]
 mod built {
     include!(concat!(env!("OUT_DIR"), "/built.rs"));
 }

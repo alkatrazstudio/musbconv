@@ -19,12 +19,11 @@ impl<K: Clone + Eq + Hash, V: Clone> ConcurrentMap<K, V> {
     }
 
     fn get_from_map(map: &HashMap<K, Arc<RwLock<Option<V>>>>, key: &K) -> Option<V> {
-        if let Some(res) = map.get(key) {
-            if let Ok(res_guard) = res.read() {
-                if let Some(s) = &*res_guard {
-                    return Some(s.clone());
-                }
-            }
+        if let Some(res) = map.get(key)
+            && let Ok(res_guard) = res.read()
+            && let Some(s) = &*res_guard
+        {
+            return Some(s.clone());
         }
         return None;
     }
@@ -53,7 +52,7 @@ impl<K: Clone + Eq + Hash, V: Clone> ConcurrentMap<K, V> {
                 res_lock = Some(lock);
                 map.insert(key.clone(), i.clone());
             }
-        };
+        }
 
         if let Some(mut lock_guard) = res_lock {
             let res = val_func();

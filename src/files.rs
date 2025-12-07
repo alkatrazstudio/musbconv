@@ -26,39 +26,36 @@ pub fn find_files(dirs: &[String], exts: &[String]) -> Result<Vec<Item>, Box<dyn
                             let sub_items = find_files(&[filename.to_owned()], exts)?;
                             items.extend(sub_items);
                         } else if file_type.is_file() {
-                            if let Some(ext) = path.extension() {
-                                if let Some(ext) = ext.to_str() {
-                                    let ext = ext.to_lowercase();
-                                    let ext = ext.to_string();
-                                    if !exts.contains(&ext) {
-                                        continue;
-                                    }
+                            if let Some(ext) = path.extension()
+                                && let Some(ext) = ext.to_str()
+                            {
+                                let ext = ext.to_lowercase();
+                                let ext = ext.clone();
+                                if !exts.contains(&ext) {
+                                    continue;
                                 }
                             }
-                            if let Some(basename) = path.file_stem() {
-                                if let Some(basename) = basename.to_str() {
-                                    let mut infos = Vec::new();
-                                    if let Some(cue_infos) = find_cue_info(&path) {
-                                        infos = cue_infos;
-                                    }
-                                    if infos.is_empty() {
+                            if let Some(basename) = path.file_stem()
+                                && let Some(basename) = basename.to_str()
+                            {
+                                let infos = find_cue_info(&path).unwrap_or_default();
+                                if infos.is_empty() {
+                                    items.push(Item {
+                                        filename: filename.to_string(),
+                                        basename: basename.to_string(),
+                                        index: 0,
+                                        total: 0,
+                                        cue: None,
+                                    });
+                                } else {
+                                    for info in infos {
                                         items.push(Item {
                                             filename: filename.to_string(),
                                             basename: basename.to_string(),
                                             index: 0,
                                             total: 0,
-                                            cue: None,
+                                            cue: Some(info),
                                         });
-                                    } else {
-                                        for info in infos {
-                                            items.push(Item {
-                                                filename: filename.to_string(),
-                                                basename: basename.to_string(),
-                                                index: 0,
-                                                total: 0,
-                                                cue: Some(info),
-                                            });
-                                        }
                                     }
                                 }
                             }
@@ -121,6 +118,6 @@ pub fn print_tree(base_dir: &str, filenames: &[&String]) {
 
             println!("{}{}", std::path::MAIN_SEPARATOR, &name);
         }
-        prev_components = components.clone();
+        prev_components.clone_from(&components);
     }
 }
