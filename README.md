@@ -223,9 +223,9 @@ EXAMPLES:
 
 ## Minimum system requirements
 
-- Ubuntu 22.04 (x86_64)
-- Windows 11 22H2 (x86_64)
-- macOS 14 (x86_64)
+- Ubuntu 24.04 (x86_64)
+- Windows 11 (x86_64)
+- macOS 26 (x86_64)
 
 Also, you need `ffmpeg` and `ffprobe` installed.
 

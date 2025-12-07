@@ -11,13 +11,13 @@ on:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-22.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
-    container: rust:1.72.1
+    runs-on: ubuntu-24.04 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#choosing-github-hosted-runners
+    container: rust:1.91.1
 
     steps:
     - name: Checkout
 
-      uses: actions/checkout@v4.1.0 # https://github.com/actions/checkout/releases
+      uses: actions/checkout@v6.0.1 # https://github.com/actions/checkout/releases
       with:
         persist-credentials: false
 
@@ -28,18 +28,18 @@ jobs:
       run: tar -cf- -C target/release musbconv | xz -c9e - > musbconv-linux.tar.xz
 
     - name: Save
-      uses: actions/upload-artifact@v3.1.3 # https://github.com/actions/upload-artifact/releases
+      uses: actions/upload-artifact@v5.0.0 # https://github.com/actions/upload-artifact/releases
       with:
         name: release-linux
         path: "*.tar.xz"
 
 
   build-windows:
-    runs-on: windows-2022
+    runs-on: windows-2025
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4.1.0
+      uses: actions/checkout@v6.0.1
       with:
         persist-credentials: false
 
@@ -50,18 +50,18 @@ jobs:
       run: Compress-Archive -Path target\release\musbconv.exe -DestinationPath musbconv-windows.zip
 
     - name: Save
-      uses: actions/upload-artifact@v3.1.3
+      uses: actions/upload-artifact@v5.0.0
       with:
         name: release-windows
         path: "*.zip"
 
 
   build-macos:
-    runs-on: macos-12
+    runs-on: macos-26
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4.1.0
+      uses: actions/checkout@v6.0.1
       with:
         persist-credentials: false
 
@@ -72,7 +72,7 @@ jobs:
       run: tar -cf- -C target/release musbconv | xz -c9e - > musbconv-macos.tar.xz
 
     - name: Save
-      uses: actions/upload-artifact@v3.1.3
+      uses: actions/upload-artifact@v5.0.0
       with:
         name: release-macos
         path: "*.tar.xz"
@@ -86,14 +86,14 @@ jobs:
     - build-windows
     - build-macos
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Version
       id: version
-      run: echo ::set-output name=version::${GITHUB_REF#refs/tags/}
+      run: echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
     - name: Checkout
-      uses: actions/checkout@v4.1.0
+      uses: actions/checkout@v6.0.1
       with:
         persist-credentials: false
 
@@ -101,7 +101,7 @@ jobs:
       run: grep -Pzom1 "(?s)\n[##\s]*${{ steps.version.outputs.version }}.*?\n+.*?\K.*?(\n\n|$)" CHANGELOG.md | sed 's/[^[:print:]]//g' > RELEASE.md
 
     - name: Download
-      uses: actions/download-artifact@v3.0.2 # https://github.com/actions/download-artifact/releases
+      uses: actions/download-artifact@v7.0.0 # https://github.com/actions/download-artifact/releases
       with:
         path: artifacts
 
@@ -112,7 +112,7 @@ jobs:
         mv artifacts/release-macos/musbconv-macos.tar.xz artifacts/release-macos/musbconv-macos-${{ steps.version.outputs.version }}.tar.xz
 
     - name: Release
-      uses: softprops/action-gh-release@v0.1.15 # https://github.com/softprops/action-gh-release/releases
+      uses: softprops/action-gh-release@v2.5.0 # https://github.com/softprops/action-gh-release/releases
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
