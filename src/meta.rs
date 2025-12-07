@@ -4,10 +4,10 @@
 use crate::cue::CueInfo;
 use lazy_static::lazy_static;
 use regex::Regex;
-use sanitize_filename::{sanitize_with_options, Options};
+use sanitize_filename::{Options, sanitize_with_options};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::cmp::{max, Ordering};
+use std::cmp::{Ordering, max};
 use std::collections::HashMap;
 use std::error::Error;
 use std::ffi::OsStr;
