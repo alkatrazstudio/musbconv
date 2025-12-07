@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // 🄯 2021, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-use cuna::track::Track;
 use cuna::Cuna;
+use cuna::track::Track;
 use regex::Regex;
 use std::char::REPLACEMENT_CHARACTER;
 use std::error::Error;

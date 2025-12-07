@@ -4,8 +4,8 @@
 use crate::args::AppArgs;
 use crate::cue::CueInfo;
 use crate::formats::Format;
-use crate::meta::{extract_meta, prepare_filename_tags, MetaTags};
-use crate::pics::{ffmpeg_conv_pic_args, find_cover_in_dir, PicsMap};
+use crate::meta::{MetaTags, extract_meta, prepare_filename_tags};
+use crate::pics::{PicsMap, ffmpeg_conv_pic_args, find_cover_in_dir};
 use handlebars::Handlebars;
 use path_dedot::ParseDot;
 use std::error::Error;

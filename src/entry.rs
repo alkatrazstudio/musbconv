@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // 🄯 2021, Alexey Parfenov <zxed@alkatrazstudio.net>
 
-use crate::args::{parse_cli_args, AppArgs};
-use crate::convert::{conv_item, validate_template, Item, Progs};
+use crate::args::{AppArgs, parse_cli_args};
+use crate::convert::{Item, Progs, conv_item, validate_template};
 use crate::files::{find_files, print_tree};
 use crate::pics::PicsMap;
 use rayon::prelude::*;
