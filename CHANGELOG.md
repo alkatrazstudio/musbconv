@@ -1,6 +1,11 @@
 # musbconv - CHANGELOG
 
 
+## v1.0.0 (Jan 1, 2026)
+
+- Only internal changes
+
+
 ## v0.5.1 (October 17, 2023)
 
 - Added: `--cover-name-from-dirname` and `--cover-name-from-filename` arguments

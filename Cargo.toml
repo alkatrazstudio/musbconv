@@ -1,7 +1,7 @@
 [package]
 name = "musbconv"
 description = "Batch converter for audio files (uses ffmpeg)"
-version = "0.5.1"
+version = "1.0.0"
 authors = ["Alexey Parfenov <zxed@alkatrazstudio.net>"]
 edition = "2024"
 license = "GPL-3.0-only"
